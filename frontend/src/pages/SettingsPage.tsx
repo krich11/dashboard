@@ -4,6 +4,7 @@ import {
   getAlertSettings,
   getCollectorSettings,
   getCollectorStatus,
+  runCollectorOnce,
   getEncryptionStatus,
   getHealth,
   getMockScenario,
@@ -75,6 +76,7 @@ export function SettingsPage() {
   const [collectorForm, setCollectorForm] = useState<CollectorSettings | null>(null)
   const [reachabilityForm, setReachabilityForm] = useState<ReachabilitySettings | null>(null)
   const [encryptionMessage, setEncryptionMessage] = useState<string | null>(null)
+  const [collectorMessage, setCollectorMessage] = useState<string | null>(null)
   const alerts = useQuery({ queryKey: ['settings-alerts'], queryFn: getAlertSettings })
   const [alertsForm, setAlertsForm] = useState<AlertSettings | null>(null)
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
@@ -124,6 +126,21 @@ export function SettingsPage() {
     },
   })
 
+  const runCollector = useMutation({
+    mutationFn: runCollectorOnce,
+    onSuccess: (result) => {
+      setCollectorMessage(
+        `Polled ${result.devices_polled} device(s); reachability ${result.reachability ? 'OK' : 'failed'}.`,
+      )
+      queryClient.invalidateQueries({ queryKey: ['high-level'] })
+      queryClient.invalidateQueries({ queryKey: ['reachability'] })
+      queryClient.invalidateQueries({ queryKey: ['devices-with-status'] })
+      queryClient.invalidateQueries({ queryKey: ['collector-status'] })
+    },
+    onError: (err) =>
+      setCollectorMessage(err instanceof Error ? err.message : 'Collector run failed'),
+  })
+
   const runEncryptionTest = useMutation({
     mutationFn: () => testEncryption('dashboard-encryption-test'),
     onSuccess: (result) => setEncryptionMessage(result.message),
@@ -142,6 +159,7 @@ export function SettingsPage() {
         <article className="card settings-card">
           <h3>Collector</h3>
           <p className="settings-hint">Poll interval changes apply after service restart.</p>
+          {collectorMessage && <p className="settings-hint">{collectorMessage}</p>}
           {collectorStatus.data && (
             <div className="collector-status-panel">
               <div className="collector-status-grid">
@@ -174,6 +192,14 @@ export function SettingsPage() {
               </div>
             </div>
           )}
+          <button
+            type="button"
+            className="inline-btn"
+            onClick={() => runCollector.mutate()}
+            disabled={runCollector.isPending}
+          >
+            {runCollector.isPending ? 'Running…' : 'Run collector now'}
+          </button>
           {collectorForm && (
             <form
               className="settings-form"
@@ -406,8 +432,22 @@ export function SettingsPage() {
                 >
                   <option value="json">JSON (generic)</option>
                   <option value="slack">Slack (mrkdwn blocks)</option>
+                  <option value="pagerduty">PagerDuty Events v2</option>
                 </select>
               </label>
+              {alertsForm.format === 'pagerduty' && (
+                <label>
+                  PagerDuty routing key
+                  <input
+                    type="text"
+                    value={alertsForm.pagerduty_routing_key}
+                    onChange={(e) =>
+                      setAlertsForm({ ...alertsForm, pagerduty_routing_key: e.target.value })
+                    }
+                    placeholder="Integration routing key"
+                  />
+                </label>
+              )}
               <label>
                 Min interval (sec)
                 <input

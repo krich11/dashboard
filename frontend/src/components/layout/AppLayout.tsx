@@ -1,4 +1,5 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { useEffect } from 'react'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { RefreshControl } from './RefreshControl'
 import { SystemStatusBadge } from './SystemStatusBadge'
 
@@ -12,6 +13,19 @@ const navItems = [
 ]
 
 export function AppLayout() {
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.altKey && event.key.toLowerCase() === 'n') {
+        event.preventDefault()
+        navigate('/noc')
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [navigate])
+
   return (
     <div className="app-shell">
       <header className="app-header">

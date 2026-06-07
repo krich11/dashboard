@@ -7,6 +7,7 @@ from app.config import get_settings
 from app.schemas.settings import (
     AlertSettings,
     AlertTestResult,
+    CollectorRunResult,
     CollectorSettings,
     CollectorStatus,
     EncryptionStatus,
@@ -51,6 +52,12 @@ def update_collector_settings(
 @router.get("/collector/status", response_model=CollectorStatus)
 def get_collector_status(db: Session = Depends(get_db)) -> CollectorStatus:
     return CollectorStatus(**collector_service.get_status(db))
+
+
+@router.post("/collector/run", response_model=CollectorRunResult)
+async def run_collector_once() -> CollectorRunResult:
+    result = await collector_service.run_once()
+    return CollectorRunResult(**result)
 
 
 @router.get("/mock-scenario", response_model=MockScenarioSettings)

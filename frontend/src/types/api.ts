@@ -72,7 +72,13 @@ export interface AlertSettings {
   enabled: boolean
   webhook_url: string
   min_interval_sec: number
-  format: 'json' | 'slack'
+  format: 'json' | 'slack' | 'pagerduty'
+  pagerduty_routing_key: string
+}
+
+export interface CollectorRunResult {
+  devices_polled: number
+  reachability: boolean
 }
 
 export interface AlertTestResult {

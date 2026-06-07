@@ -20,6 +20,12 @@ def prometheus_metrics(db: Session = Depends(get_db)) -> Response:
     health_value = {"ok": 1, "degraded": 0.5, "down": 0, "unknown": -1}.get(
         summary.internet_health, -1
     )
+    banner_value = {
+        "all_clear": 0,
+        "internet_degraded": 1,
+        "devices_down": 2,
+        "mixed": 3,
+    }.get(summary.banner, -1)
     lines = [
         "# HELP dashboard_important_devices_total Total important devices tracked",
         "# TYPE dashboard_important_devices_total gauge",
@@ -48,5 +54,8 @@ def prometheus_metrics(db: Session = Depends(get_db)) -> Response:
         "# HELP dashboard_open_issues_total Devices with non-ok status",
         "# TYPE dashboard_open_issues_total gauge",
         f"dashboard_open_issues_total {len(issues)}",
+        "# HELP dashboard_banner_code Operational banner 0=clear 1=internet 2=devices 3=mixed",
+        "# TYPE dashboard_banner_code gauge",
+        f"dashboard_banner_code {banner_value}",
     ]
     return Response(content="\n".join(lines) + "\n", media_type="text/plain; version=0.0.4")

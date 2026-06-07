@@ -52,3 +52,41 @@ def test_alert_test_without_url():
     client.put("/api/v1/settings/alerts", json={"enabled": False, "webhook_url": ""})
     result = client.post("/api/v1/settings/alerts/test").json()
     assert result["ok"] is False
+
+
+def test_pagerduty_payload_builder():
+    from datetime import UTC, datetime
+
+    from app.schemas.settings import AlertSettings
+    from app.schemas.status import HighLevelSummary
+    from app.services.alert_service import build_pagerduty_payload
+
+    summary = HighLevelSummary(
+        banner="mixed",
+        banner_text="Mixed outage",
+        important_total=5,
+        important_up=2,
+        important_down=3,
+        internet_health="degraded",
+        internet_summary="IPv4 OK, IPv6 Down",
+        worst_overall="critical",
+        timestamp=datetime.now(UTC),
+    )
+    payload = build_pagerduty_payload(
+        AlertSettings(pagerduty_routing_key="test-key"), summary
+    )
+    assert payload["routing_key"] == "test-key"
+    assert payload["payload"]["severity"] == "critical"
+
+
+def test_collector_run_once():
+    result = client.post("/api/v1/settings/collector/run")
+    assert result.status_code == 200
+    body = result.json()
+    assert body["devices_polled"] >= 67
+    assert body["reachability"] is True
+
+
+def test_banner_code_metric():
+    response = client.get("/metrics")
+    assert "dashboard_banner_code" in response.text

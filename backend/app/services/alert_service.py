@@ -89,11 +89,46 @@ def build_slack_payload(summary: HighLevelSummary, *, test: bool = False) -> dic
     }
 
 
+def build_pagerduty_payload(
+    settings: AlertSettings, summary: HighLevelSummary, *, test: bool = False
+) -> dict[str, Any]:
+    severity = "info"
+    if summary.banner in {"devices_down", "mixed"}:
+        severity = "critical"
+    elif summary.banner == "internet_degraded":
+        severity = "warning"
+    elif summary.banner == "all_clear":
+        severity = "info"
+
+    payload: dict[str, Any] = {
+        "event_action": "trigger",
+        "payload": {
+            "summary": ("[TEST] " if test else "") + summary.banner_text,
+            "severity": severity,
+            "source": "datacenter-dashboard",
+            "component": "operations-banner",
+            "group": "datacenter",
+            "class": summary.banner,
+            "custom_details": {
+                "important_down": summary.important_down,
+                "important_total": summary.important_total,
+                "internet_health": summary.internet_health,
+                "internet_summary": summary.internet_summary,
+            },
+        },
+    }
+    if settings.pagerduty_routing_key:
+        payload["routing_key"] = settings.pagerduty_routing_key
+    return payload
+
+
 def build_webhook_payload(
     settings: AlertSettings, summary: HighLevelSummary, *, test: bool = False
 ) -> dict[str, Any]:
     if settings.format == "slack":
         return build_slack_payload(summary, test=test)
+    if settings.format == "pagerduty":
+        return build_pagerduty_payload(settings, summary, test=test)
     return build_json_payload(summary, test=test)
 
 

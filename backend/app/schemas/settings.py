@@ -50,12 +50,18 @@ class AlertSettings(BaseModel):
     enabled: bool = False
     webhook_url: str = ""
     min_interval_sec: int = Field(default=300, ge=60, le=3600)
-    format: Literal["json", "slack"] = "json"
+    format: Literal["json", "slack", "pagerduty"] = "json"
+    pagerduty_routing_key: str = ""
 
 
 class AlertTestResult(BaseModel):
     ok: bool
     message: str
+
+
+class CollectorRunResult(BaseModel):
+    devices_polled: int
+    reachability: bool
 
 
 class CollectorStatus(BaseModel):

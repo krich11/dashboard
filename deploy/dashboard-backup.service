@@ -1,0 +1,12 @@
+[Unit]
+Description=Datacenter Dashboard SQLite backup
+After=network.target
+
+[Service]
+Type=oneshot
+User=dashboard
+Group=dashboard
+WorkingDirectory=/opt/dashboard
+Environment=DB_PATH=/opt/dashboard/data/dashboard.db
+Environment=BACKUP_DIR=/opt/dashboard/backups
+ExecStart=/opt/dashboard/scripts/backup.sh

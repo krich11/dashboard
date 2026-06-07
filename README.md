@@ -2,7 +2,7 @@
 
 Native-Linux datacenter status dashboard for ~67 devices with modular JSON-driven widgets.
 
-**v1.2** — NOC mode, Prometheus/Grafana, Slack webhook alerts. Tags: `v1.0.0` … `v1.2.0`.
+**v1.3** — PagerDuty alerts, manual collector run, scheduled backups. Tags: `v1.0.0` … `v1.3.0`.
 
 ## Quick start (development)
 
@@ -130,6 +130,15 @@ sqlite3 /opt/dashboard/data/dashboard.db ".backup '/var/backups/dashboard-$(date
 ```
 
 Also archive `/opt/dashboard/.env` (contains `DASHBOARD_SECRET_KEY`) in a secrets manager. Without the key, encrypted device credentials cannot be decrypted.
+
+Scheduled backups via systemd timer:
+
+```bash
+sudo cp deploy/dashboard-backup.{service,timer} /etc/systemd/system/
+sudo systemctl enable --now dashboard-backup.timer
+```
+
+Keyboard shortcut: **Alt+N** opens NOC mode from anywhere in the app.
 
 ## API highlights
 

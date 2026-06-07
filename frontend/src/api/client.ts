@@ -3,6 +3,7 @@ import type {
   AlertSettings,
   AlertTestResult,
   CollectorSettings,
+  CollectorRunResult,
   CollectorStatus,
   Dashboard,
   DeviceCreate,
@@ -220,6 +221,10 @@ export function getCollectorSettings() {
 
 export function getCollectorStatus() {
   return fetchJson<CollectorStatus>('/api/v1/settings/collector/status')
+}
+
+export function runCollectorOnce() {
+  return fetchJson<CollectorRunResult>('/api/v1/settings/collector/run', { method: 'POST' })
 }
 
 export function getAlertSettings() {

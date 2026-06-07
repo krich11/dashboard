@@ -142,5 +142,23 @@ class CollectorService:
                     existing.message = f"Collector error: {exc}"
                     existing.timestamp = datetime.now(UTC).replace(tzinfo=None)
 
+    async def run_once(self) -> dict:
+        settings = get_settings()
+        if self._semaphore is None:
+            self._semaphore = asyncio.Semaphore(settings.collector_concurrency)
+        db = SessionLocal()
+        try:
+            monitor = ExternalReachabilityMonitor(db)
+            await monitor.run_once()
+            devices = db.query(Device).all()
+            if not settings.mock_mode:
+                devices = [d for d in devices if d.connector_enabled]
+            if devices:
+                await asyncio.gather(*(self._poll_one(db, device) for device in devices))
+            db.commit()
+            return {"devices_polled": len(devices), "reachability": True}
+        finally:
+            db.close()
+
 
 collector_service = CollectorService()
