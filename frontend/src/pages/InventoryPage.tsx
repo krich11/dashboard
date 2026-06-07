@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
-import { updateDevice } from '../api/client'
+import { useMemo, useRef, useState } from 'react'
+import { importDevicesCsv, updateDevice } from '../api/client'
+import { DeviceDetailModal } from '../components/inventory/DeviceDetailModal'
 import { useDevicesWithStatus } from '../hooks/useDashboardData'
 import type { DeviceWithStatus } from '../types/api'
 
@@ -13,6 +14,8 @@ export function InventoryPage() {
   const [status, setStatus] = useState('')
   const [importantOnly, setImportantOnly] = useState(false)
   const [selected, setSelected] = useState<DeviceWithStatus | null>(null)
+  const [importMessage, setImportMessage] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const filters = useMemo(
     () => ({
@@ -36,12 +39,47 @@ export function InventoryPage() {
     },
   })
 
+  const importCsv = useMutation({
+    mutationFn: importDevicesCsv,
+    onSuccess: (result) => {
+      setImportMessage(`Imported ${result.imported} device(s).`)
+      queryClient.invalidateQueries({ queryKey: ['devices-with-status'] })
+    },
+    onError: (err) =>
+      setImportMessage(err instanceof Error ? err.message : 'Import failed'),
+  })
+
   return (
     <section className="page">
-      <div className="page-header">
-        <h2>Inventory</h2>
-        <p>{devices.data?.length ?? 0} devices shown (of 67 total)</p>
+      <div className="page-header inventory-header">
+        <div>
+          <h2>Inventory</h2>
+          <p>{devices.data?.length ?? 0} devices shown (of 67 total)</p>
+        </div>
+        <div className="dashboard-actions">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,text/csv"
+            hidden
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file) importCsv.mutate(file)
+              e.target.value = ''
+            }}
+          />
+          <button
+            type="button"
+            className="inline-btn"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={importCsv.isPending}
+          >
+            {importCsv.isPending ? 'Importing…' : 'Import CSV'}
+          </button>
+        </div>
       </div>
+
+      {importMessage && <p className="settings-hint">{importMessage}</p>}
 
       <div className="inventory-filters card">
         <input
@@ -87,6 +125,7 @@ export function InventoryPage() {
                 <th>Name</th>
                 <th>Type</th>
                 <th>Status</th>
+                <th>Connector</th>
                 <th>Important</th>
                 <th>Last Update</th>
               </tr>
@@ -99,6 +138,12 @@ export function InventoryPage() {
                   <td>
                     <span className={`status-pill status-${device.status?.overall ?? 'unknown'}`}>
                       {device.status?.overall ?? 'unknown'}
+                    </span>
+                  </td>
+                  <td>
+                    <span className="connector-pill">
+                      {device.connector_enabled ? 'on' : 'off'}
+                      {device.credentials_configured ? ' · creds' : ''}
                     </span>
                   </td>
                   <td>
@@ -127,29 +172,10 @@ export function InventoryPage() {
       </div>
 
       {selected && (
-        <div className="modal-backdrop" onClick={() => setSelected(null)} role="presentation">
-          <div className="modal card" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
-            <h3>{selected.name}</h3>
-            <p>
-              <strong>Hostname:</strong> {selected.hostname}
-            </p>
-            <p>
-              <strong>Type:</strong> {selected.device_type}
-            </p>
-            <p>
-              <strong>Management IP:</strong> {selected.management_ip ?? '—'}
-            </p>
-            <p>
-              <strong>Status:</strong> {selected.status?.message ?? 'No status'}
-            </p>
-            {selected.status?.metrics && (
-              <pre className="metrics-block">{JSON.stringify(selected.status.metrics, null, 2)}</pre>
-            )}
-            <button type="button" className="inline-btn" onClick={() => setSelected(null)}>
-              Close
-            </button>
-          </div>
-        </div>
+        <DeviceDetailModal
+          device={selected}
+          onClose={() => setSelected(null)}
+        />
       )}
     </section>
   )

@@ -47,6 +47,19 @@ export interface Device {
   important_flag: boolean
   management_ip: string | null
   connector_enabled: boolean
+  credentials_configured: boolean
+}
+
+export interface DeviceUpdate {
+  name?: string
+  hostname?: string
+  device_type?: string
+  tags?: string[]
+  important_flag?: boolean
+  management_ip?: string | null
+  connector_enabled?: boolean
+  username?: string
+  password?: string
 }
 
 export interface DeviceWithStatus extends Device {

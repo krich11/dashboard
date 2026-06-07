@@ -71,6 +71,7 @@ Authoritative API shapes for Datacenter Dashboard. Changes require Lead Architec
 - `POST /api/v1/dashboards/import`
 - `GET/POST/PUT/DELETE /api/v1/devices`
 - `POST /api/v1/devices/import` (CSV)
+- `POST /api/v1/devices/{id}/poll` — on-demand connector poll
 
 Mock scenarios (`all_clear`, `devices_down`, `internet_degraded`, `mixed`) drive `MockConnector` via `MOCK_SCENARIO` env var.
 

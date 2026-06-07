@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from sqlalchemy.orm import Session
 
+from app.collectors.helpers import ConnectorSkipped
 from app.db.session import get_db
 from app.schemas.device import DeviceCreate, DeviceRead, DeviceStatusRead, DeviceUpdate, DeviceWithStatus
 from app.services import devices as device_service
@@ -38,7 +39,7 @@ def get_device(device_id: str, db: Session = Depends(get_db)) -> DeviceRead:
     device = device_service.get_device(db, device_id)
     if device is None:
         raise HTTPException(status_code=404, detail="Device not found")
-    return DeviceRead.model_validate(device)
+    return device_service.to_device_read(device)
 
 
 @router.get("/{device_id}/status", response_model=DeviceStatusRead)
@@ -75,3 +76,13 @@ def import_devices(file: UploadFile = File(...), db: Session = Depends(get_db)) 
     content = file.file.read().decode("utf-8")
     count = device_service.import_devices_csv(db, content)
     return {"imported": count}
+
+
+@router.post("/{device_id}/poll", response_model=DeviceStatusRead)
+async def poll_device_now(device_id: str, db: Session = Depends(get_db)) -> DeviceStatusRead:
+    try:
+        return await device_service.poll_device_now(db, device_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ConnectorSkipped as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc

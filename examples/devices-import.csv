@@ -1,0 +1,5 @@
+name,hostname,device_type,tags,important_flag,management_ip,connector_enabled
+esxi-01,esxi-01.mgmt.local,hpe_ilorest,compute,true,10.10.1.11,true
+core-sw1,core-sw1.mgmt.local,juniper,network,true,10.10.2.1,true
+ap-floor1,ap-floor1.mgmt.local,aruba,wireless,false,10.10.3.10,false
+mon-01,mon-01.mgmt.local,linux_ssh,monitoring,false,10.10.4.20,false

@@ -13,14 +13,19 @@ from app.schemas.device import (
     DeviceWithStatus,
     IssueItem,
 )
+from app.collectors.factory import get_connector
 from app.services.crypto import decrypt_credentials, encrypt_credentials
+
+
+def to_device_read(device: Device) -> DeviceRead:
+    return DeviceRead.from_device(device)
 
 
 def list_devices(db: Session, important: bool | None = None) -> list[DeviceRead]:
     query = db.query(Device)
     if important is not None:
         query = query.filter(Device.important_flag.is_(important))
-    return [DeviceRead.model_validate(d) for d in query.order_by(Device.name).all()]
+    return [to_device_read(d) for d in query.order_by(Device.name).all()]
 
 
 def list_devices_with_status(
@@ -57,7 +62,7 @@ def list_devices_with_status(
             continue
         results.append(
             DeviceWithStatus(
-                **DeviceRead.model_validate(device).model_dump(),
+                **to_device_read(device).model_dump(),
                 status=device_status,
             )
         )
@@ -97,7 +102,7 @@ def create_device(db: Session, payload: DeviceCreate) -> DeviceRead:
     db.add(device)
     db.commit()
     db.refresh(device)
-    return DeviceRead.model_validate(device)
+    return to_device_read(device)
 
 
 def update_device(db: Session, device_id: str, payload: DeviceUpdate) -> DeviceRead | None:
@@ -117,7 +122,36 @@ def update_device(db: Session, device_id: str, payload: DeviceUpdate) -> DeviceR
         )
     db.commit()
     db.refresh(device)
-    return DeviceRead.model_validate(device)
+    return to_device_read(device)
+
+
+async def poll_device_now(db: Session, device_id: str) -> DeviceStatusRead:
+    device = db.get(Device, device_id)
+    if device is None:
+        raise ValueError("Device not found")
+    connector = get_connector(db, device)
+    status = await connector.poll(device_id)
+    existing = db.query(LatestStatus).filter(LatestStatus.device_id == device_id).first()
+    timestamp = status.timestamp.replace(tzinfo=None)
+    if existing:
+        existing.overall = status.overall
+        existing.message = status.message
+        existing.metrics = status.metrics
+        existing.details = status.details
+        existing.timestamp = timestamp
+    else:
+        db.add(
+            LatestStatus(
+                device_id=device_id,
+                overall=status.overall,
+                message=status.message,
+                metrics=status.metrics,
+                details=status.details,
+                timestamp=timestamp,
+            )
+        )
+    db.commit()
+    return status
 
 
 def delete_device(db: Session, device_id: str) -> bool:

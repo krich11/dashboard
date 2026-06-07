@@ -11,7 +11,7 @@ export function HelpPage() {
           <h3>Navigation</h3>
           <ul>
             <li><strong>Overview</strong> — default dashboard with high-level status widgets.</li>
-            <li><strong>Inventory</strong> — full device table, filters, and important-flag toggles.</li>
+            <li><strong>Inventory</strong> — device table, CSV import, credential/connector editing, poll now.</li>
             <li><strong>Dashboards</strong> — compose layouts, export/import JSON, multi-dashboard tabs.</li>
             <li><strong>Settings</strong> — collector tuning, reachability targets, encryption setup.</li>
           </ul>

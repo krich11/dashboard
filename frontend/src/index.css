@@ -653,3 +653,37 @@ a {
 .trend-legend .dot.down {
   background: #f85149;
 }
+
+.inventory-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.device-modal {
+  width: min(640px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+}
+
+.credentials-fieldset {
+  border: 1px solid #2a3a5c;
+  border-radius: 8px;
+  padding: 12px;
+  margin: 0 0 12px;
+}
+
+.credentials-fieldset legend {
+  padding: 0 6px;
+  color: #9db0d3;
+}
+
+.connector-pill {
+  font-size: 0.85rem;
+  color: #9db0d3;
+}
+
+.device-status-panel {
+  margin-bottom: 12px;
+}

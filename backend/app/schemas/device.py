@@ -41,6 +41,21 @@ class DeviceRead(BaseModel):
     important_flag: bool
     management_ip: str | None
     connector_enabled: bool
+    credentials_configured: bool = False
+
+    @classmethod
+    def from_device(cls, device) -> "DeviceRead":
+        return cls(
+            id=device.id,
+            name=device.name,
+            hostname=device.hostname,
+            device_type=device.device_type,
+            tags=device.tags or [],
+            important_flag=device.important_flag,
+            management_ip=device.management_ip,
+            connector_enabled=device.connector_enabled,
+            credentials_configured=bool(device.credentials_encrypted),
+        )
 
 
 class DeviceStatusRead(BaseModel):

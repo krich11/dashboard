@@ -3,6 +3,8 @@ import type {
   Dashboard,
   DashboardExport,
   Device,
+  DeviceStatus,
+  DeviceUpdate,
   DeviceWithStatus,
   EncryptionStatus,
   EncryptionTestResult,
@@ -52,12 +54,28 @@ export function getDevicesWithStatus(params?: {
   return fetchJson<DeviceWithStatus[]>(`/api/v1/devices/with-status${query ? `?${query}` : ''}`)
 }
 
-export function updateDevice(deviceId: string, payload: Partial<Device>) {
+export function updateDevice(deviceId: string, payload: DeviceUpdate) {
   return fetchJson<Device>(`/api/v1/devices/${deviceId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
+}
+
+export function pollDevice(deviceId: string) {
+  return fetchJson<DeviceStatus>(`/api/v1/devices/${deviceId}/poll`, {
+    method: 'POST',
+  })
+}
+
+export async function importDevicesCsv(file: File) {
+  const form = new FormData()
+  form.append('file', file)
+  const response = await fetch('/api/v1/devices/import', { method: 'POST', body: form })
+  if (!response.ok) {
+    throw new Error(`API error ${response.status}: /api/v1/devices/import`)
+  }
+  return response.json() as Promise<{ imported: number }>
 }
 
 export function getDefaultDashboard() {
