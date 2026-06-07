@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import asyncio
-import ipaddress
+
 from sqlalchemy.orm import Session
 
+from app.collectors.factory import CONNECTOR_BY_TYPE, get_connector
+from app.collectors.helpers import http_get_json, ping_host
 from app.config import get_settings
-from app.collectors.helpers import ConnectorError, http_get_json, ping_host
 from app.models.device import Device
 from app.schemas.discovery import (
     CredentialTestResult,
@@ -15,69 +16,67 @@ from app.schemas.discovery import (
 )
 from app.schemas.device import DeviceCreate
 from app.services import devices as device_service
-from app.collectors.factory import CONNECTOR_BY_TYPE, get_connector
+from app.services.discovery_fingerprint import fingerprint_target, probe_ssh_login
+from app.services.discovery_l2 import collect_l2_neighbors, neighbor_addresses
+from app.services.discovery_targets import (
+    build_default_target_hosts,
+    expand_explicit_targets,
+    get_default_scan_prefixes,
+)
 
-MAX_SCAN_TARGETS = 256
 DEVICE_TYPES = tuple(CONNECTOR_BY_TYPE.keys())
 
 
-def expand_targets(targets: list[str]) -> list[str]:
-    expanded: list[str] = []
-    for raw in targets:
-        value = raw.strip()
-        if not value:
-            continue
-        if "/" in value:
-            network = ipaddress.ip_network(value, strict=False)
-            for host in network.hosts():
-                expanded.append(str(host))
-                if len(expanded) >= MAX_SCAN_TARGETS:
-                    return expanded
-        else:
-            expanded.append(value)
-            if len(expanded) >= MAX_SCAN_TARGETS:
-                return expanded
-    return expanded
+def _max_scan_targets(requested: int | None = None) -> int:
+    settings = get_settings()
+    limit = requested or settings.discovery_max_targets
+    return min(limit, settings.discovery_max_targets)
 
 
-async def _port_open(target: str, port: int, timeout: float = 3.0) -> bool:
-    try:
-        _, writer = await asyncio.wait_for(asyncio.open_connection(target, port), timeout=timeout)
-        writer.close()
-        await writer.wait_closed()
-        return True
-    except (OSError, asyncio.TimeoutError):
-        return False
+def resolve_scan_targets(
+    targets: list[str] | None,
+    *,
+    use_default_ranges: bool,
+    max_targets: int,
+    rfc1918_only: bool,
+    l2_addresses: list[str] | None = None,
+) -> tuple[list[str], list[str]]:
+    hosts: list[str] = []
+    prefixes: list[str] = []
 
+    if use_default_ranges:
+        default_hosts, prefixes = build_default_target_hosts(max_targets)
+        hosts.extend(default_hosts)
 
-async def _probe_redfish(target: str, username: str | None, password: str | None) -> tuple[bool, str]:
-    try:
-        await http_get_json(f"https://{target}/redfish/v1/", username=username, password=password)
-        return True, "Redfish API reachable"
-    except ConnectorError as exc:
-        return False, str(exc)
-    except Exception as exc:  # noqa: BLE001
-        return False, str(exc)
+    if targets:
+        remaining = max_targets - len(hosts)
+        if remaining > 0:
+            hosts.extend(
+                expand_explicit_targets(
+                    targets,
+                    max_targets=remaining,
+                    rfc1918_only=rfc1918_only,
+                )
+            )
 
+    if l2_addresses:
+        seen = {h.lower() for h in hosts}
+        for addr in l2_addresses:
+            key = addr.lower()
+            if key in seen:
+                continue
+            hosts.append(addr)
+            seen.add(key)
+            if len(hosts) >= max_targets:
+                break
 
-async def _probe_ssh_hostname(target: str, username: str, password: str) -> tuple[bool, str, str | None]:
-    import paramiko
+    if not hosts and not use_default_ranges:
+        raise ValueError("Provide targets or enable use_default_ranges")
 
-    def run() -> tuple[bool, str, str | None]:
-        client = paramiko.SSHClient()
-        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        client.connect(target, username=username, password=password, timeout=12)
-        try:
-            _, stdout, _ = client.exec_command("hostname -f 2>/dev/null || hostname")
-            hostname = stdout.read().decode("utf-8", errors="replace").strip() or None
-            return True, "SSH login succeeded", hostname
-        finally:
-            client.close()
+    if use_default_ranges and not prefixes:
+        prefixes = get_default_scan_prefixes()
 
-    try:
-        return await asyncio.to_thread(run)
-    except Exception as exc:  # noqa: BLE001
-        return False, str(exc), None
+    return hosts[:max_targets], prefixes
 
 
 async def probe_target(
@@ -86,74 +85,36 @@ async def probe_target(
     username: str | None = None,
     password: str | None = None,
     device_type_hint: str | None = None,
+    discovery_source: str = "active_scan",
 ) -> DiscoveryCandidate:
-    settings = get_settings()
-    if settings.mock_mode:
-        suffix = target.split(".")[-1]
-        return DiscoveryCandidate(
-            target=target,
-            reachable=True,
-            detected_type=device_type_hint or "linux_ssh",
-            suggested_name=f"discovered-{suffix}",
-            suggested_hostname=f"discovered-{suffix}.local",
-            credentials_ok=True if username and password else None,
-            message="Mock discovery candidate",
-        )
-
-    reachable = await ping_host(target)
-    if not reachable:
-        return DiscoveryCandidate(
-            target=target,
-            reachable=False,
-            message="Host unreachable (ping failed)",
-        )
-
-    detected: str | None = device_type_hint
-    credentials_ok: bool | None = None
-    message = "Host reachable"
-    suggested_hostname: str | None = None
-
-    redfish_open = await _port_open(target, 443)
-    ssh_open = await _port_open(target, 22)
-
-    if username and password:
-        if device_type_hint == "hpe_ilorest" or (detected is None and redfish_open):
-            ok, msg = await _probe_redfish(target, username, password)
-            credentials_ok = ok
-            message = msg
-            if ok:
-                detected = "hpe_ilorest"
-        if device_type_hint == "linux_ssh" or (detected is None and ssh_open):
-            ok, msg, hostname = await _probe_ssh_hostname(target, username, password)
-            if credentials_ok is None or ok:
-                credentials_ok = ok
-                message = msg
-            if ok:
-                detected = detected or "linux_ssh"
-                suggested_hostname = hostname
-    else:
-        if redfish_open:
-            detected = detected or "hpe_ilorest"
-            message = "Port 443 open — likely Redfish/iLO (credentials not tested)"
-        elif ssh_open:
-            detected = detected or "linux_ssh"
-            message = "Port 22 open — likely SSH (credentials not tested)"
-
-    name = suggested_hostname or f"host-{target.replace('.', '-')}"
+    result = await fingerprint_target(
+        target,
+        username=username,
+        password=password,
+        device_type_hint=device_type_hint,
+    )
     return DiscoveryCandidate(
         target=target,
-        reachable=True,
-        detected_type=detected,
-        suggested_name=name.split(".")[0],
-        suggested_hostname=suggested_hostname or name,
-        credentials_ok=credentials_ok,
-        message=message,
+        reachable=result["reachable"],
+        detected_type=result.get("detected_type"),
+        suggested_name=result.get("suggested_name"),
+        suggested_hostname=result.get("suggested_hostname"),
+        credentials_ok=result.get("credentials_ok"),
+        message=result.get("message", ""),
+        discovery_source=discovery_source,
+        fingerprint_methods=result.get("fingerprint_methods", []),
     )
 
 
 async def scan_network(
-    targets: list[str],
+    db: Session | None,
+    targets: list[str] | None = None,
     *,
+    use_default_ranges: bool = True,
+    infrastructure_device_ids: list[str] | None = None,
+    include_arp_mac: bool = True,
+    max_targets: int | None = None,
+    rfc1918_only: bool = True,
     username: str | None = None,
     password: str | None = None,
     device_type_hint: str | None = None,
@@ -161,7 +122,30 @@ async def scan_network(
     if device_type_hint and device_type_hint not in DEVICE_TYPES:
         raise ValueError(f"Unsupported device_type_hint. Choose one of: {', '.join(DEVICE_TYPES)}")
 
-    hosts = expand_targets(targets)
+    limit = _max_scan_targets(max_targets)
+    l2_neighbors_found = 0
+    infrastructure_sources: list[str] = []
+    l2_addresses: list[str] = []
+
+    if include_arp_mac and db is not None and infrastructure_device_ids:
+        neighbors, infrastructure_sources = await collect_l2_neighbors(
+            db,
+            infrastructure_device_ids,
+            username=username,
+            password=password,
+        )
+        l2_neighbors_found = len(neighbors)
+        l2_addresses = neighbor_addresses(neighbors)
+
+    hosts, prefixes = resolve_scan_targets(
+        targets,
+        use_default_ranges=use_default_ranges,
+        max_targets=limit,
+        rfc1918_only=rfc1918_only,
+        l2_addresses=l2_addresses,
+    )
+
+    l2_set = {a.lower() for a in l2_addresses}
     results = await asyncio.gather(
         *(
             probe_target(
@@ -169,11 +153,18 @@ async def scan_network(
                 username=username,
                 password=password,
                 device_type_hint=device_type_hint,
+                discovery_source="arp_mac_table" if host.lower() in l2_set else "active_scan",
             )
             for host in hosts
         )
     )
-    return DiscoveryScanResult(scanned=len(hosts), candidates=list(results))
+    return DiscoveryScanResult(
+        scanned=len(hosts),
+        candidates=list(results),
+        scan_prefixes=prefixes,
+        l2_neighbors_found=l2_neighbors_found,
+        infrastructure_sources=infrastructure_sources,
+    )
 
 
 async def test_device_credentials(
@@ -227,7 +218,7 @@ async def test_device_credentials(
                 overall="ok",
             )
         if device.device_type == "linux_ssh" and user and pwd:
-            ok, msg, _ = await _probe_ssh_hostname(target, user, pwd)
+            ok, msg, _ = await probe_ssh_login(target, user, pwd)
             return CredentialTestResult(
                 ok=ok,
                 message=msg,

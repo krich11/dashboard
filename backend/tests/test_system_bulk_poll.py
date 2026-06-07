@@ -7,7 +7,7 @@ client = TestClient(app)
 
 def test_system_info():
     info = client.get("/api/v1/system/info").json()
-    assert info["version"] == "1.6.0"
+    assert info["version"] == "1.7.0"
     assert info["history_raw_days"] == 30
     assert info["history_hourly_days"] == 90
     assert info["mock_mode"] is True

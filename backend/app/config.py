@@ -16,7 +16,14 @@ class Settings(BaseSettings):
     database_url: str = f"sqlite:///{ROOT_DIR / 'data' / 'dashboard.db'}"
     dashboard_secret_key: str = "dev-only-change-in-production"
     dashboard_api_key: str | None = None
+    bind_host: str = "0.0.0.0"
     cors_origins: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
+    cors_allow_origin_regex: str | None = (
+        r"https?://(localhost|127\.0\.0\.1|\[::1\]|"
+        r"10\.\d+\.\d+\.\d+|172\.(?:1[6-9]|2\d|3[01])\.\d+\.\d+|"
+        r"192\.168\.\d+\.\d+)(:\d+)?"
+    )
+    discovery_max_targets: int = 512
 
     status_history_raw_days: int = 30
     status_history_hourly_days: int = 90

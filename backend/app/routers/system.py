@@ -9,7 +9,7 @@ from app.services import settings_service
 
 router = APIRouter(prefix="/api/v1/system", tags=["system"])
 
-APP_VERSION = "1.6.0"
+APP_VERSION = "1.7.0"
 
 
 @router.get("/info")

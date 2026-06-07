@@ -45,7 +45,7 @@ else
   echo "FAIL discovery scan"
   FAILURES=$((FAILURES + 1))
 fi
-check "system info" "$BASE_URL/api/v1/system/info" '"version":"1.6.0"'
+check "system info" "$BASE_URL/api/v1/system/info" '"version":"1.7.0"'
 check "status history" "$BASE_URL/api/v1/status/history" "important_total"
 check "devices export" "$BASE_URL/api/v1/devices/export" "hostname"
 

@@ -2,7 +2,7 @@
 
 Native-Linux datacenter status dashboard for ~67 devices with modular JSON-driven widgets.
 
-**v1.6** — Discovery scan/import, credential test, threshold alerts + alert log. Tags: `v1.0.0` … `v1.6.0`.
+**v1.7** — Deep discovery (multi-method fingerprint, ARP/MAC from infra devices, RFC1918 + delegated IPv6 defaults), LAN bind (`0.0.0.0`). Tags: `v1.0.0` … `v1.7.0`.
 
 ## Quick start (development)
 
@@ -13,7 +13,7 @@ python3 scripts/seed_mocks.py
 # Backend API
 export MOCK_MODE=true
 export PYTHONPATH=backend
-python3 -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+python3 -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 # Frontend (Node 22+ via nvm)
 cd frontend && npm install && npm run dev

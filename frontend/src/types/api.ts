@@ -96,6 +96,20 @@ export interface DiscoveryCandidate {
   suggested_hostname: string | null
   credentials_ok: boolean | null
   message: string
+  discovery_source?: string | null
+  fingerprint_methods?: string[]
+}
+
+export interface DiscoveryScanResult {
+  scanned: number
+  candidates: DiscoveryCandidate[]
+  scan_prefixes: string[]
+  l2_neighbors_found: number
+  infrastructure_sources: string[]
+}
+
+export interface DiscoveryPrefixesResult {
+  prefixes: string[]
 }
 
 export interface CredentialTestResult {

@@ -15,7 +15,7 @@ dev:
 	./scripts/dev.sh
 
 backend:
-	cd $(BACKEND_DIR) && $(PYTHON) -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+	cd $(BACKEND_DIR) && $(PYTHON) -m uvicorn app.main:app --reload --host $${BIND_HOST:-0.0.0.0} --port 8000
 
 frontend:
 	cd $(FRONTEND_DIR) && $(NPM) run dev

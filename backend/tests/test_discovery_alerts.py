@@ -8,7 +8,12 @@ client = TestClient(app)
 def test_discovery_scan_mock_mode():
     response = client.post(
         "/api/v1/discovery/scan",
-        json={"targets": ["10.0.0.50"], "username": "admin", "password": "secret"},
+        json={
+            "use_default_ranges": False,
+            "targets": ["10.0.0.50"],
+            "username": "admin",
+            "password": "secret",
+        },
     )
     assert response.status_code == 200
     body = response.json()

@@ -5,6 +5,8 @@ import type {
   AlertTestResult,
   CredentialTestResult,
   DiscoveryCandidate,
+  DiscoveryPrefixesResult,
+  DiscoveryScanResult,
   CollectorSettings,
   CollectorRunResult,
   CollectorStatus,
@@ -298,20 +300,26 @@ export function acknowledgeAlertEvent(eventId: number) {
   })
 }
 
+export function getDiscoveryPrefixes() {
+  return fetchJson<DiscoveryPrefixesResult>('/api/v1/discovery/prefixes')
+}
+
 export function scanDiscovery(payload: {
-  targets: string[]
+  targets?: string[]
+  use_default_ranges?: boolean
+  infrastructure_device_ids?: string[]
+  include_arp_mac?: boolean
+  max_targets?: number
+  rfc1918_only?: boolean
   username?: string
   password?: string
   device_type_hint?: string
 }) {
-  return fetchJson<{ scanned: number; candidates: DiscoveryCandidate[] }>(
-    '/api/v1/discovery/scan',
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    },
-  )
+  return fetchJson<DiscoveryScanResult>('/api/v1/discovery/scan', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
 }
 
 export function importDiscovery(payload: {

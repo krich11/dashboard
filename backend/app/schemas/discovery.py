@@ -14,7 +14,12 @@ class CredentialTestResult(BaseModel):
 
 
 class DiscoveryScanRequest(BaseModel):
-    targets: list[str] = Field(min_length=1, max_length=32)
+    targets: list[str] = Field(default_factory=list, max_length=32)
+    use_default_ranges: bool = True
+    infrastructure_device_ids: list[str] = Field(default_factory=list, max_length=16)
+    include_arp_mac: bool = True
+    max_targets: int | None = Field(default=None, ge=1, le=1024)
+    rfc1918_only: bool = True
     username: str | None = None
     password: str | None = None
     device_type_hint: str | None = None
@@ -28,11 +33,20 @@ class DiscoveryCandidate(BaseModel):
     suggested_hostname: str | None = None
     credentials_ok: bool | None = None
     message: str = ""
+    discovery_source: str | None = None
+    fingerprint_methods: list[str] = Field(default_factory=list)
 
 
 class DiscoveryScanResult(BaseModel):
     scanned: int
     candidates: list[DiscoveryCandidate]
+    scan_prefixes: list[str] = Field(default_factory=list)
+    l2_neighbors_found: int = 0
+    infrastructure_sources: list[str] = Field(default_factory=list)
+
+
+class DiscoveryPrefixesResult(BaseModel):
+    prefixes: list[str]
 
 
 class DiscoveryImportRequest(BaseModel):
