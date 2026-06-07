@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.db.session import get_db
+from app.services import devices as device_service
 from app.services.aggregation import compute_high_level_summary
 from app.services.collector_service import collector_service
 
@@ -13,6 +14,7 @@ router = APIRouter(tags=["metrics"])
 def prometheus_metrics(db: Session = Depends(get_db)) -> Response:
     summary = compute_high_level_summary(db)
     status = collector_service.get_status(db)
+    issues = device_service.list_issues(db, important_only=False)
     settings = get_settings()
 
     health_value = {"ok": 1, "degraded": 0.5, "down": 0, "unknown": -1}.get(
@@ -43,5 +45,8 @@ def prometheus_metrics(db: Session = Depends(get_db)) -> Response:
         "# HELP dashboard_circuits_open Collector circuits currently open",
         "# TYPE dashboard_circuits_open gauge",
         f"dashboard_circuits_open {status['circuits_open']}",
+        "# HELP dashboard_open_issues_total Devices with non-ok status",
+        "# TYPE dashboard_open_issues_total gauge",
+        f"dashboard_open_issues_total {len(issues)}",
     ]
     return Response(content="\n".join(lines) + "\n", media_type="text/plain; version=0.0.4")

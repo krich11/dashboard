@@ -1,10 +1,11 @@
 import { Maximize2, Minimize2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useDefaultDashboard, useHighLevelStatus } from '../hooks/useDashboardData'
 import { getWidgetComponent } from '../components/widgets/registry'
 
 export function NocPage() {
+  const navigate = useNavigate()
   const dashboard = useDefaultDashboard()
   const highLevel = useHighLevelStatus(15_000)
   const [clock, setClock] = useState(new Date())
@@ -19,6 +20,14 @@ export function NocPage() {
     return () => document.body.classList.remove('noc-mode')
   }, [])
 
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') navigate('/')
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [navigate])
+
   const banner = highLevel.data?.banner ?? 'unknown'
 
   return (
@@ -29,7 +38,7 @@ export function NocPage() {
           <h1>{highLevel.data?.banner_text ?? 'Loading operational status…'}</h1>
         </div>
         <div className="noc-meta">
-          <span>{clock.toLocaleString()}</span>
+          <span>{clock.toLocaleString()} · refreshes every 15s · Esc to exit</span>
           <Link to="/" className="inline-btn" title="Exit NOC mode">
             <Minimize2 size={16} /> Exit
           </Link>
