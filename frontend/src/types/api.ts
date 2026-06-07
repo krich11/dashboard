@@ -68,6 +68,12 @@ export interface BulkDeviceUpdate {
   important_flag?: boolean
 }
 
+export interface AlertSettings {
+  enabled: boolean
+  webhook_url: string
+  min_interval_sec: number
+}
+
 export interface CollectorStatus {
   running: boolean
   mock_mode: boolean

@@ -5,6 +5,7 @@ from app.db.session import get_db
 
 from app.config import get_settings
 from app.schemas.settings import (
+    AlertSettings,
     CollectorSettings,
     CollectorStatus,
     EncryptionStatus,
@@ -14,6 +15,7 @@ from app.schemas.settings import (
     ReachabilitySettings,
 )
 from app.services import reachability as reachability_service
+from app.services.alert_service import get_alert_settings, update_alert_settings
 from app.services import settings_service
 from app.services.collector_service import collector_service
 from app.services.mock_scenario import VALID_SCENARIOS, get_active_mock_scenario, set_mock_scenario
@@ -71,6 +73,16 @@ def update_mock_scenario_settings(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return MockScenarioSettings(scenario=scenario, available=list(VALID_SCENARIOS))
+
+
+@router.get("/alerts", response_model=AlertSettings)
+def read_alert_settings(db: Session = Depends(get_db)) -> AlertSettings:
+    return get_alert_settings(db)
+
+
+@router.put("/alerts", response_model=AlertSettings)
+def write_alert_settings(payload: AlertSettings, db: Session = Depends(get_db)) -> AlertSettings:
+    return update_alert_settings(db, payload)
 
 
 @router.get("/encryption", response_model=EncryptionStatus)

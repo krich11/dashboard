@@ -1,5 +1,6 @@
 import type {
   BulkDeviceUpdate,
+  AlertSettings,
   CollectorSettings,
   CollectorStatus,
   Dashboard,
@@ -218,6 +219,18 @@ export function getCollectorSettings() {
 
 export function getCollectorStatus() {
   return fetchJson<CollectorStatus>('/api/v1/settings/collector/status')
+}
+
+export function getAlertSettings() {
+  return fetchJson<AlertSettings>('/api/v1/settings/alerts')
+}
+
+export function updateAlertSettings(payload: AlertSettings) {
+  return fetchJson<AlertSettings>('/api/v1/settings/alerts', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
 }
 
 export function getMockScenario() {

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import {
+  getAlertSettings,
   getCollectorSettings,
   getCollectorStatus,
   getEncryptionStatus,
@@ -8,11 +9,12 @@ import {
   getMockScenario,
   getReachabilitySettings,
   testEncryption,
+  updateAlertSettings,
   updateCollectorSettings,
   updateMockScenario,
   updateReachabilitySettings,
 } from '../api/client'
-import type { CollectorSettings, ReachabilitySettings } from '../types/api'
+import type { AlertSettings, CollectorSettings, ReachabilitySettings } from '../types/api'
 
 function TargetListEditor({
   label,
@@ -72,6 +74,8 @@ export function SettingsPage() {
   const [collectorForm, setCollectorForm] = useState<CollectorSettings | null>(null)
   const [reachabilityForm, setReachabilityForm] = useState<ReachabilitySettings | null>(null)
   const [encryptionMessage, setEncryptionMessage] = useState<string | null>(null)
+  const alerts = useQuery({ queryKey: ['settings-alerts'], queryFn: getAlertSettings })
+  const [alertsForm, setAlertsForm] = useState<AlertSettings | null>(null)
 
   useEffect(() => {
     if (collector.data) setCollectorForm(collector.data)
@@ -81,9 +85,18 @@ export function SettingsPage() {
     if (reachability.data) setReachabilityForm(reachability.data)
   }, [reachability.data])
 
+  useEffect(() => {
+    if (alerts.data) setAlertsForm(alerts.data)
+  }, [alerts.data])
+
   const saveCollector = useMutation({
     mutationFn: updateCollectorSettings,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['settings-collector'] }),
+  })
+
+  const saveAlerts = useMutation({
+    mutationFn: updateAlertSettings,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['settings-alerts'] }),
   })
 
   const saveReachability = useMutation({
@@ -340,6 +353,55 @@ export function SettingsPage() {
             </form>
           )}
         </article>
+
+        {alertsForm && (
+          <article className="card settings-card">
+            <h3>Webhook Alerts</h3>
+            <p className="settings-hint">
+              POST JSON to your webhook when the operational banner changes (Slack, PagerDuty, custom).
+            </p>
+            <form
+              className="settings-form"
+              onSubmit={(e) => {
+                e.preventDefault()
+                saveAlerts.mutate(alertsForm)
+              }}
+            >
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={alertsForm.enabled}
+                  onChange={(e) => setAlertsForm({ ...alertsForm, enabled: e.target.checked })}
+                />
+                Enable webhook alerts
+              </label>
+              <label>
+                Webhook URL
+                <input
+                  type="url"
+                  value={alertsForm.webhook_url}
+                  onChange={(e) => setAlertsForm({ ...alertsForm, webhook_url: e.target.value })}
+                  placeholder="https://hooks.example.com/..."
+                />
+              </label>
+              <label>
+                Min interval (sec)
+                <input
+                  type="number"
+                  min={60}
+                  max={3600}
+                  value={alertsForm.min_interval_sec}
+                  onChange={(e) =>
+                    setAlertsForm({ ...alertsForm, min_interval_sec: Number(e.target.value) })
+                  }
+                />
+              </label>
+              <button type="submit" className="inline-btn primary" disabled={saveAlerts.isPending}>
+                {saveAlerts.isPending ? 'Saving…' : 'Save alert settings'}
+              </button>
+            </form>
+          </article>
+        )}
 
         {health.data?.mock_mode && mockScenario.data && (
           <article className="card settings-card">

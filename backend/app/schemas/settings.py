@@ -46,6 +46,12 @@ class MockScenarioSettings(BaseModel):
     available: list[str] = Field(default_factory=list)
 
 
+class AlertSettings(BaseModel):
+    enabled: bool = False
+    webhook_url: str = ""
+    min_interval_sec: int = Field(default=300, ge=60, le=3600)
+
+
 class CollectorStatus(BaseModel):
     running: bool
     mock_mode: bool

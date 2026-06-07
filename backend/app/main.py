@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from app.config import ROOT_DIR, get_settings
 from app.db.base import Base
 from app.db.session import SessionLocal, engine
-from app.routers import dashboards, devices, health, reachability, status, widgets
+from app.routers import dashboards, devices, health, metrics, reachability, status, widgets
 from app.routers import settings as settings_router
 from app.services.collector_service import collector_service
 from app.services.seed import seed_from_mocks
@@ -42,6 +42,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     app.include_router(health.router)
+    app.include_router(metrics.router)
     app.include_router(status.router)
     app.include_router(reachability.router)
     app.include_router(devices.router)

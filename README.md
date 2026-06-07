@@ -2,7 +2,7 @@
 
 Native-Linux datacenter status dashboard for ~67 devices with modular JSON-driven widgets.
 
-**v1.0** — Phases 0–4 complete. Tags: `phase-0-complete` … `phase-4-complete`, `v1.0.0`.
+**v1.1** — Phases 0–4 complete + NOC mode, Prometheus `/metrics`, webhook alerts. Tags: `v1.0.0`, `v1.1.0`.
 
 ## Quick start (development)
 
@@ -125,6 +125,8 @@ Also archive `/opt/dashboard/.env` (contains `DASHBOARD_SECRET_KEY`) in a secret
 ## API highlights
 
 - `GET /health`
+- `GET /metrics` (Prometheus)
+- `GET /noc` (fullscreen NOC UI route)
 - `GET /api/v1/status/high-level`
 - `GET /api/v1/reachability/latest`
 - `GET /api/v1/reachability/history`

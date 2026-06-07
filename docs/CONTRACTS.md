@@ -76,6 +76,8 @@ Authoritative API shapes for Datacenter Dashboard. Changes require Lead Architec
 - `POST /api/v1/devices/bulk-delete` — bulk device removal
 - `POST /api/v1/devices/{id}/poll` — on-demand connector poll
 - `GET /api/v1/settings/collector/status` — scheduler health snapshot
+- `GET/PUT /api/v1/settings/alerts` — webhook alert configuration
+- `GET /metrics` — Prometheus text exposition
 
 Mock scenarios (`all_clear`, `devices_down`, `internet_degraded`, `mixed`) drive `MockConnector` via `MOCK_SCENARIO` env var.
 

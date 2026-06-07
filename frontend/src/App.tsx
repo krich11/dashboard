@@ -5,6 +5,7 @@ import { DashboardsPage } from './pages/DashboardsPage'
 import { HelpPage } from './pages/HelpPage'
 import { InventoryPage } from './pages/InventoryPage'
 import { OverviewPage } from './pages/OverviewPage'
+import { NocPage } from './pages/NocPage'
 import { SettingsPage } from './pages/SettingsPage'
 import './index.css'
 
@@ -15,6 +16,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
+          <Route path="noc" element={<NocPage />} />
           <Route element={<AppLayout />}>
             <Route index element={<OverviewPage />} />
             <Route path="inventory" element={<InventoryPage />} />

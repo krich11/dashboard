@@ -730,3 +730,66 @@ a {
   border-color: #2f8f62;
   background: rgba(47, 143, 98, 0.2);
 }
+
+.noc-launch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+body.noc-mode {
+  background: #050a14;
+}
+
+.noc-shell {
+  min-height: 100vh;
+  padding: 24px 32px 32px;
+  background: radial-gradient(circle at top, #152238 0%, #050a14 60%);
+}
+
+.noc-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-end;
+  margin-bottom: 24px;
+}
+
+.noc-header h1 {
+  margin: 8px 0 0;
+  font-size: clamp(1.75rem, 4vw, 3rem);
+}
+
+.noc-meta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  color: #9db0d3;
+}
+
+.noc-shell.banner-all_clear .noc-header h1 {
+  color: #3dd68c;
+}
+
+.noc-shell.banner-devices_down .noc-header h1,
+.noc-shell.banner-mixed .noc-header h1 {
+  color: #ff7b72;
+}
+
+.noc-shell.banner-internet_degraded .noc-header h1 {
+  color: #f2cc60;
+}
+
+.noc-widgets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.noc-widgets .widget {
+  font-size: 1.05rem;
+}
+
+.noc-widgets .updown-banner {
+  font-size: 1.4rem;
+}

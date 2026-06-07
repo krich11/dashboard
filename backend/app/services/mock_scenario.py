@@ -30,6 +30,7 @@ def set_mock_scenario(db: Session, scenario: str) -> str:
         row.value = {"scenario": scenario}
     apply_mock_scenario_to_db(db, scenario)
     db.commit()
+    db.expire_all()
     return scenario
 
 

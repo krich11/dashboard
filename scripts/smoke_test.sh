@@ -28,6 +28,8 @@ echo
 
 check "health" "$BASE_URL/health" '"status":"ok"'
 check "mock scenario api" "$BASE_URL/api/v1/settings/mock-scenario" '"scenario"'
+check "prometheus metrics" "$BASE_URL/metrics" "dashboard_important_devices_total"
+check "alert settings" "$BASE_URL/api/v1/settings/alerts" '"enabled"'
 check "high-level status" "$BASE_URL/api/v1/status/high-level" "banner"
 check "reachability latest" "$BASE_URL/api/v1/reachability/latest" "overall"
 check "devices list" "$BASE_URL/api/v1/devices" '"name"'
