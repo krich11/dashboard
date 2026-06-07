@@ -1,0 +1,86 @@
+{
+  "title": "Datacenter Dashboard",
+  "uid": "datacenter-dashboard",
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "tags": ["datacenter", "dashboard"],
+  "panels": [
+    {
+      "id": 1,
+      "title": "Important Devices Down",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "dashboard_important_devices_down",
+          "legendFormat": "down"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Important Devices Up",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+      "targets": [{ "expr": "dashboard_important_devices_up" }]
+    },
+    {
+      "id": 3,
+      "title": "Internet Health Score",
+      "type": "gauge",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+      "targets": [{ "expr": "dashboard_internet_health_score" }],
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": 0 },
+              { "color": "yellow", "value": 0.5 },
+              { "color": "green", "value": 1 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Collector Running",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+      "targets": [{ "expr": "dashboard_collector_running" }]
+    },
+    {
+      "id": 5,
+      "title": "Important Up vs Down",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "targets": [
+        { "expr": "dashboard_important_devices_up", "legendFormat": "up" },
+        { "expr": "dashboard_important_devices_down", "legendFormat": "down" }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Circuits Open",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "targets": [{ "expr": "dashboard_circuits_open", "legendFormat": "open" }]
+    }
+  ]
+}

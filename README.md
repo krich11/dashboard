@@ -2,7 +2,7 @@
 
 Native-Linux datacenter status dashboard for ~67 devices with modular JSON-driven widgets.
 
-**v1.1** — Phases 0–4 complete + NOC mode, Prometheus `/metrics`, webhook alerts. Tags: `v1.0.0`, `v1.1.0`.
+**v1.2** — NOC mode, Prometheus/Grafana, Slack webhook alerts. Tags: `v1.0.0` … `v1.2.0`.
 
 ## Quick start (development)
 
@@ -94,6 +94,15 @@ sudo systemctl enable --now dashboard
 ```
 
 The unit file expects the app at `/opt/dashboard` and reads environment from `/opt/dashboard/.env`.
+
+### 5. Prometheus + Grafana
+
+```bash
+# Add deploy/prometheus.yml to your Prometheus scrape configs
+# Import examples/grafana-dashboard.json in Grafana (Dashboards → Import)
+```
+
+Webhook alerts support **JSON** or **Slack** payload formats (Settings → Webhook Alerts → Send test alert).
 
 ### 4. nginx example (snippet)
 

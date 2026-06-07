@@ -6,6 +6,7 @@ from app.db.session import get_db
 from app.config import get_settings
 from app.schemas.settings import (
     AlertSettings,
+    AlertTestResult,
     CollectorSettings,
     CollectorStatus,
     EncryptionStatus,
@@ -15,7 +16,7 @@ from app.schemas.settings import (
     ReachabilitySettings,
 )
 from app.services import reachability as reachability_service
-from app.services.alert_service import get_alert_settings, update_alert_settings
+from app.services.alert_service import get_alert_settings, send_test_alert, update_alert_settings
 from app.services import settings_service
 from app.services.collector_service import collector_service
 from app.services.mock_scenario import VALID_SCENARIOS, get_active_mock_scenario, set_mock_scenario
@@ -83,6 +84,11 @@ def read_alert_settings(db: Session = Depends(get_db)) -> AlertSettings:
 @router.put("/alerts", response_model=AlertSettings)
 def write_alert_settings(payload: AlertSettings, db: Session = Depends(get_db)) -> AlertSettings:
     return update_alert_settings(db, payload)
+
+
+@router.post("/alerts/test", response_model=AlertTestResult)
+async def test_alert_webhook(db: Session = Depends(get_db)) -> AlertTestResult:
+    return await send_test_alert(db)
 
 
 @router.get("/encryption", response_model=EncryptionStatus)

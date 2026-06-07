@@ -1,6 +1,7 @@
 import type {
   BulkDeviceUpdate,
   AlertSettings,
+  AlertTestResult,
   CollectorSettings,
   CollectorStatus,
   Dashboard,
@@ -231,6 +232,10 @@ export function updateAlertSettings(payload: AlertSettings) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
+}
+
+export function testAlertWebhook() {
+  return fetchJson<AlertTestResult>('/api/v1/settings/alerts/test', { method: 'POST' })
 }
 
 export function getMockScenario() {

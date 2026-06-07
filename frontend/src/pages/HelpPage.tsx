@@ -40,6 +40,18 @@ export function HelpPage() {
         </article>
 
         <article className="card">
+          <h3>Observability</h3>
+          <p>
+            Scrape <code>GET /metrics</code> with Prometheus (<code>deploy/prometheus.yml</code>).
+            Import <code>examples/grafana-dashboard.json</code> for starter panels.
+          </p>
+          <p>
+            Configure webhook alerts in Settings (JSON or Slack format). Use <strong>Send test alert</strong>
+            to verify delivery before enabling.
+          </p>
+        </article>
+
+        <article className="card">
           <h3>Production deploy</h3>
           <ol className="help-steps">
             <li>Build frontend: <code>cd frontend && npm run build</code></li>

@@ -8,6 +8,7 @@ import {
   getHealth,
   getMockScenario,
   getReachabilitySettings,
+  testAlertWebhook,
   testEncryption,
   updateAlertSettings,
   updateCollectorSettings,
@@ -76,6 +77,7 @@ export function SettingsPage() {
   const [encryptionMessage, setEncryptionMessage] = useState<string | null>(null)
   const alerts = useQuery({ queryKey: ['settings-alerts'], queryFn: getAlertSettings })
   const [alertsForm, setAlertsForm] = useState<AlertSettings | null>(null)
+  const [alertMessage, setAlertMessage] = useState<string | null>(null)
 
   useEffect(() => {
     if (collector.data) setCollectorForm(collector.data)
@@ -97,6 +99,13 @@ export function SettingsPage() {
   const saveAlerts = useMutation({
     mutationFn: updateAlertSettings,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['settings-alerts'] }),
+  })
+
+  const runAlertTest = useMutation({
+    mutationFn: testAlertWebhook,
+    onSuccess: (result) => setAlertMessage(result.message),
+    onError: (err) =>
+      setAlertMessage(err instanceof Error ? err.message : 'Alert test failed'),
   })
 
   const saveReachability = useMutation({
@@ -385,6 +394,21 @@ export function SettingsPage() {
                 />
               </label>
               <label>
+                Payload format
+                <select
+                  value={alertsForm.format}
+                  onChange={(e) =>
+                    setAlertsForm({
+                      ...alertsForm,
+                      format: e.target.value as AlertSettings['format'],
+                    })
+                  }
+                >
+                  <option value="json">JSON (generic)</option>
+                  <option value="slack">Slack (mrkdwn blocks)</option>
+                </select>
+              </label>
+              <label>
                 Min interval (sec)
                 <input
                   type="number"
@@ -396,9 +420,20 @@ export function SettingsPage() {
                   }
                 />
               </label>
-              <button type="submit" className="inline-btn primary" disabled={saveAlerts.isPending}>
-                {saveAlerts.isPending ? 'Saving…' : 'Save alert settings'}
-              </button>
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="inline-btn"
+                  onClick={() => runAlertTest.mutate()}
+                  disabled={runAlertTest.isPending}
+                >
+                  {runAlertTest.isPending ? 'Sending…' : 'Send test alert'}
+                </button>
+                <button type="submit" className="inline-btn primary" disabled={saveAlerts.isPending}>
+                  {saveAlerts.isPending ? 'Saving…' : 'Save alert settings'}
+                </button>
+              </div>
+              {alertMessage && <p className="settings-hint">{alertMessage}</p>}
             </form>
           </article>
         )}

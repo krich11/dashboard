@@ -72,6 +72,12 @@ export interface AlertSettings {
   enabled: boolean
   webhook_url: string
   min_interval_sec: number
+  format: 'json' | 'slack'
+}
+
+export interface AlertTestResult {
+  ok: boolean
+  message: string
 }
 
 export interface CollectorStatus {
