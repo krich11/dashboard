@@ -50,6 +50,21 @@ class CollectorService:
         self.scheduler.shutdown(wait=False)
         self._running = False
 
+    def get_status(self, db: Session) -> dict:
+        settings = get_settings()
+        devices = db.query(Device).all()
+        enabled = [d for d in devices if d.connector_enabled]
+        circuits_open = sum(1 for state in self._backoff.values() if state.circuit_open)
+        devices_in_backoff = sum(1 for state in self._backoff.values() if state.failures > 0)
+        return {
+            "running": self._running,
+            "mock_mode": settings.mock_mode,
+            "total_devices": len(devices),
+            "connector_enabled_devices": len(enabled) if not settings.mock_mode else len(devices),
+            "circuits_open": circuits_open,
+            "devices_in_backoff": devices_in_backoff,
+        }
+
     async def _reachability_job(self) -> None:
         db = SessionLocal()
         try:

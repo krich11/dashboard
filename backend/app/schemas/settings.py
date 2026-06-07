@@ -39,3 +39,12 @@ class EncryptionTestRequest(BaseModel):
 class EncryptionTestResult(BaseModel):
     ok: bool
     message: str
+
+
+class CollectorStatus(BaseModel):
+    running: bool
+    mock_mode: bool
+    total_devices: int
+    connector_enabled_devices: int
+    circuits_open: int
+    devices_in_backoff: int

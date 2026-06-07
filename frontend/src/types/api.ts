@@ -50,6 +50,33 @@ export interface Device {
   credentials_configured: boolean
 }
 
+export interface DeviceCreate {
+  name: string
+  hostname: string
+  device_type: string
+  tags?: string[]
+  important_flag?: boolean
+  management_ip?: string | null
+  connector_enabled?: boolean
+  username?: string
+  password?: string
+}
+
+export interface BulkDeviceUpdate {
+  device_ids: string[]
+  connector_enabled?: boolean
+  important_flag?: boolean
+}
+
+export interface CollectorStatus {
+  running: boolean
+  mock_mode: boolean
+  total_devices: number
+  connector_enabled_devices: number
+  circuits_open: number
+  devices_in_backoff: number
+}
+
 export interface DeviceUpdate {
   name?: string
   hostname?: string

@@ -18,6 +18,12 @@ class DeviceCreate(DeviceBase):
     password: str | None = None
 
 
+class BulkDeviceUpdate(BaseModel):
+    device_ids: list[str]
+    connector_enabled: bool | None = None
+    important_flag: bool | None = None
+
+
 class DeviceUpdate(BaseModel):
     name: str | None = None
     hostname: str | None = None

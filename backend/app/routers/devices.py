@@ -3,7 +3,14 @@ from sqlalchemy.orm import Session
 
 from app.collectors.helpers import ConnectorSkipped
 from app.db.session import get_db
-from app.schemas.device import DeviceCreate, DeviceRead, DeviceStatusRead, DeviceUpdate, DeviceWithStatus
+from app.schemas.device import (
+    BulkDeviceUpdate,
+    DeviceCreate,
+    DeviceRead,
+    DeviceStatusRead,
+    DeviceUpdate,
+    DeviceWithStatus,
+)
 from app.services import devices as device_service
 
 router = APIRouter(prefix="/api/v1/devices", tags=["devices"])
@@ -76,6 +83,12 @@ def import_devices(file: UploadFile = File(...), db: Session = Depends(get_db)) 
     content = file.file.read().decode("utf-8")
     count = device_service.import_devices_csv(db, content)
     return {"imported": count}
+
+
+@router.post("/bulk")
+def bulk_update_devices(payload: BulkDeviceUpdate, db: Session = Depends(get_db)) -> dict:
+    updated = device_service.bulk_update_devices(db, payload)
+    return {"updated": updated}
 
 
 @router.post("/{device_id}/poll", response_model=DeviceStatusRead)

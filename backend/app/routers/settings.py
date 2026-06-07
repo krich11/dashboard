@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.schemas.settings import (
     CollectorSettings,
+    CollectorStatus,
     EncryptionStatus,
     EncryptionTestRequest,
     EncryptionTestResult,
@@ -11,6 +12,7 @@ from app.schemas.settings import (
 )
 from app.services import reachability as reachability_service
 from app.services import settings_service
+from app.services.collector_service import collector_service
 
 router = APIRouter(prefix="/api/v1/settings", tags=["settings"])
 
@@ -37,6 +39,11 @@ def update_collector_settings(
     payload: CollectorSettings, db: Session = Depends(get_db)
 ) -> CollectorSettings:
     return settings_service.update_collector_settings(db, payload)
+
+
+@router.get("/collector/status", response_model=CollectorStatus)
+def get_collector_status(db: Session = Depends(get_db)) -> CollectorStatus:
+    return CollectorStatus(**collector_service.get_status(db))
 
 
 @router.get("/encryption", response_model=EncryptionStatus)

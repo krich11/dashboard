@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useRef, useState } from 'react'
-import { importDevicesCsv, updateDevice } from '../api/client'
+import { bulkUpdateDevices, importDevicesCsv, updateDevice } from '../api/client'
+import { AddDeviceModal } from '../components/inventory/AddDeviceModal'
 import { DeviceDetailModal } from '../components/inventory/DeviceDetailModal'
 import { useDevicesWithStatus } from '../hooks/useDashboardData'
 import type { DeviceWithStatus } from '../types/api'
@@ -14,7 +15,10 @@ export function InventoryPage() {
   const [status, setStatus] = useState('')
   const [importantOnly, setImportantOnly] = useState(false)
   const [selected, setSelected] = useState<DeviceWithStatus | null>(null)
+  const [showAdd, setShowAdd] = useState(false)
+  const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set())
   const [importMessage, setImportMessage] = useState<string | null>(null)
+  const [bulkMessage, setBulkMessage] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const filters = useMemo(
@@ -49,6 +53,43 @@ export function InventoryPage() {
       setImportMessage(err instanceof Error ? err.message : 'Import failed'),
   })
 
+  const bulkUpdate = useMutation({
+    mutationFn: bulkUpdateDevices,
+    onSuccess: (result) => {
+      setBulkMessage(`Updated ${result.updated} device(s).`)
+      setCheckedIds(new Set())
+      queryClient.invalidateQueries({ queryKey: ['devices-with-status'] })
+      queryClient.invalidateQueries({ queryKey: ['high-level'] })
+    },
+    onError: (err) =>
+      setBulkMessage(err instanceof Error ? err.message : 'Bulk update failed'),
+  })
+
+  const visibleIds = devices.data?.map((d) => d.id) ?? []
+  const allVisibleChecked =
+    visibleIds.length > 0 && visibleIds.every((id) => checkedIds.has(id))
+
+  function toggleRow(id: string) {
+    setCheckedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function toggleAllVisible() {
+    if (allVisibleChecked) {
+      setCheckedIds((prev) => {
+        const next = new Set(prev)
+        visibleIds.forEach((id) => next.delete(id))
+        return next
+      })
+    } else {
+      setCheckedIds((prev) => new Set([...prev, ...visibleIds]))
+    }
+  }
+
   return (
     <section className="page">
       <div className="page-header inventory-header">
@@ -57,6 +98,9 @@ export function InventoryPage() {
           <p>{devices.data?.length ?? 0} devices shown (of 67 total)</p>
         </div>
         <div className="dashboard-actions">
+          <button type="button" className="inline-btn primary" onClick={() => setShowAdd(true)}>
+            Add device
+          </button>
           <input
             ref={fileInputRef}
             type="file"
@@ -80,6 +124,55 @@ export function InventoryPage() {
       </div>
 
       {importMessage && <p className="settings-hint">{importMessage}</p>}
+      {bulkMessage && <p className="settings-hint">{bulkMessage}</p>}
+
+      {checkedIds.size > 0 && (
+        <div className="bulk-toolbar card">
+          <span>{checkedIds.size} selected</span>
+          <button
+            type="button"
+            className="inline-btn"
+            onClick={() =>
+              bulkUpdate.mutate({
+                device_ids: [...checkedIds],
+                connector_enabled: true,
+              })
+            }
+            disabled={bulkUpdate.isPending}
+          >
+            Enable connectors
+          </button>
+          <button
+            type="button"
+            className="inline-btn"
+            onClick={() =>
+              bulkUpdate.mutate({
+                device_ids: [...checkedIds],
+                connector_enabled: false,
+              })
+            }
+            disabled={bulkUpdate.isPending}
+          >
+            Disable connectors
+          </button>
+          <button
+            type="button"
+            className="inline-btn"
+            onClick={() =>
+              bulkUpdate.mutate({
+                device_ids: [...checkedIds],
+                important_flag: true,
+              })
+            }
+            disabled={bulkUpdate.isPending}
+          >
+            Mark important
+          </button>
+          <button type="button" className="inline-btn" onClick={() => setCheckedIds(new Set())}>
+            Clear
+          </button>
+        </div>
+      )}
 
       <div className="inventory-filters card">
         <input
@@ -122,6 +215,14 @@ export function InventoryPage() {
           <table className="inventory-table">
             <thead>
               <tr>
+                <th>
+                  <input
+                    type="checkbox"
+                    checked={allVisibleChecked}
+                    onChange={toggleAllVisible}
+                    aria-label="Select all visible devices"
+                  />
+                </th>
                 <th>Name</th>
                 <th>Type</th>
                 <th>Status</th>
@@ -132,15 +233,23 @@ export function InventoryPage() {
             </thead>
             <tbody>
               {devices.data.map((device) => (
-                <tr key={device.id} onClick={() => setSelected(device)} className="clickable-row">
-                  <td>{device.name}</td>
-                  <td>{device.device_type}</td>
-                  <td>
+                <tr key={device.id} className="clickable-row">
+                  <td onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={checkedIds.has(device.id)}
+                      onChange={() => toggleRow(device.id)}
+                      aria-label={`Select ${device.name}`}
+                    />
+                  </td>
+                  <td onClick={() => setSelected(device)}>{device.name}</td>
+                  <td onClick={() => setSelected(device)}>{device.device_type}</td>
+                  <td onClick={() => setSelected(device)}>
                     <span className={`status-pill status-${device.status?.overall ?? 'unknown'}`}>
                       {device.status?.overall ?? 'unknown'}
                     </span>
                   </td>
-                  <td>
+                  <td onClick={() => setSelected(device)}>
                     <span className="connector-pill">
                       {device.connector_enabled ? 'on' : 'off'}
                       {device.credentials_configured ? ' · creds' : ''}
@@ -161,7 +270,7 @@ export function InventoryPage() {
                       {device.important_flag ? '★' : '☆'}
                     </button>
                   </td>
-                  <td>
+                  <td onClick={() => setSelected(device)}>
                     {device.status ? new Date(device.status.timestamp).toLocaleString() : '—'}
                   </td>
                 </tr>
@@ -171,12 +280,8 @@ export function InventoryPage() {
         )}
       </div>
 
-      {selected && (
-        <DeviceDetailModal
-          device={selected}
-          onClose={() => setSelected(null)}
-        />
-      )}
+      {selected && <DeviceDetailModal device={selected} onClose={() => setSelected(null)} />}
+      {showAdd && <AddDeviceModal onClose={() => setShowAdd(false)} />}
     </section>
   )
 }

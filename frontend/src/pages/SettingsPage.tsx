@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import {
   getCollectorSettings,
+  getCollectorStatus,
   getEncryptionStatus,
   getReachabilitySettings,
   testEncryption,
@@ -48,6 +49,11 @@ function TargetListEditor({
 export function SettingsPage() {
   const queryClient = useQueryClient()
   const collector = useQuery({ queryKey: ['settings-collector'], queryFn: getCollectorSettings })
+  const collectorStatus = useQuery({
+    queryKey: ['collector-status'],
+    queryFn: getCollectorStatus,
+    refetchInterval: 15000,
+  })
   const reachability = useQuery({
     queryKey: ['settings-reachability'],
     queryFn: getReachabilitySettings,
@@ -94,6 +100,38 @@ export function SettingsPage() {
         <article className="card settings-card">
           <h3>Collector</h3>
           <p className="settings-hint">Poll interval changes apply after service restart.</p>
+          {collectorStatus.data && (
+            <div className="collector-status-panel">
+              <div className="collector-status-grid">
+                <div>
+                  <span className="stat-label">Scheduler</span>
+                  <strong>{collectorStatus.data.running ? 'Running' : 'Stopped'}</strong>
+                </div>
+                <div>
+                  <span className="stat-label">Mode</span>
+                  <strong>{collectorStatus.data.mock_mode ? 'Mock' : 'Production'}</strong>
+                </div>
+                <div>
+                  <span className="stat-label">Polling</span>
+                  <strong>{collectorStatus.data.connector_enabled_devices}</strong>
+                </div>
+                <div>
+                  <span className="stat-label">Circuits open</span>
+                  <strong className={collectorStatus.data.circuits_open > 0 ? 'text-danger' : ''}>
+                    {collectorStatus.data.circuits_open}
+                  </strong>
+                </div>
+                <div>
+                  <span className="stat-label">In backoff</span>
+                  <strong>{collectorStatus.data.devices_in_backoff}</strong>
+                </div>
+                <div>
+                  <span className="stat-label">Total devices</span>
+                  <strong>{collectorStatus.data.total_devices}</strong>
+                </div>
+              </div>
+            </div>
+          )}
           {collectorForm && (
             <form
               className="settings-form"

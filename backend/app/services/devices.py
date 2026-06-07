@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.models.device import Device, LatestStatus
 from app.schemas.device import (
+    BulkDeviceUpdate,
     DeviceCreate,
     DeviceRead,
     DeviceStatusRead,
@@ -152,6 +153,25 @@ async def poll_device_now(db: Session, device_id: str) -> DeviceStatusRead:
         )
     db.commit()
     return status
+
+
+def bulk_update_devices(db: Session, payload: BulkDeviceUpdate) -> int:
+    if not payload.device_ids:
+        return 0
+    if payload.connector_enabled is None and payload.important_flag is None:
+        return 0
+    updated = 0
+    for device_id in payload.device_ids:
+        device = db.get(Device, device_id)
+        if device is None:
+            continue
+        if payload.connector_enabled is not None:
+            device.connector_enabled = payload.connector_enabled
+        if payload.important_flag is not None:
+            device.important_flag = payload.important_flag
+        updated += 1
+    db.commit()
+    return updated
 
 
 def delete_device(db: Session, device_id: str) -> bool:

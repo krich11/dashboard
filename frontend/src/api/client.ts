@@ -1,6 +1,9 @@
 import type {
+  BulkDeviceUpdate,
   CollectorSettings,
+  CollectorStatus,
   Dashboard,
+  DeviceCreate,
   DashboardExport,
   Device,
   DeviceStatus,
@@ -52,6 +55,22 @@ export function getDevicesWithStatus(params?: {
   if (params?.search) searchParams.set('search', params.search)
   const query = searchParams.toString()
   return fetchJson<DeviceWithStatus[]>(`/api/v1/devices/with-status${query ? `?${query}` : ''}`)
+}
+
+export function createDevice(payload: DeviceCreate) {
+  return fetchJson<Device>('/api/v1/devices', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+}
+
+export function bulkUpdateDevices(payload: BulkDeviceUpdate) {
+  return fetchJson<{ updated: number }>('/api/v1/devices/bulk', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
 }
 
 export function updateDevice(deviceId: string, payload: DeviceUpdate) {
@@ -160,6 +179,10 @@ export function updateReachabilitySettings(payload: ReachabilitySettings) {
 
 export function getCollectorSettings() {
   return fetchJson<CollectorSettings>('/api/v1/settings/collector')
+}
+
+export function getCollectorStatus() {
+  return fetchJson<CollectorStatus>('/api/v1/settings/collector/status')
 }
 
 export function updateCollectorSettings(payload: CollectorSettings) {
