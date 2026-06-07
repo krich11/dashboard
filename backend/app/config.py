@@ -12,9 +12,27 @@ class Settings(BaseSettings):
     app_name: str = "Datacenter Dashboard"
     mock_mode: bool = True
     mock_scenario: str = "all_clear"
+    testing: bool = False  # set TESTING=true in test runs
     database_url: str = f"sqlite:///{ROOT_DIR / 'data' / 'dashboard.db'}"
-    dashboard_secret_key: str = ""
+    dashboard_secret_key: str = "dev-only-change-in-production"
     cors_origins: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
+
+    collector_interval_sec: int = 60
+    collector_concurrency: int = 8
+    collector_default_backoff_sec: int = 30
+    collector_max_backoff_sec: int = 300
+    collector_circuit_breaker_threshold: int = 5
+    status_staleness_sec: int = 180
+
+    reachability_interval_sec: int = 60
+    reachability_timeout_sec: int = 5
+    reachability_method: str = "ping"
+    reachability_require_both_families: bool = True
+    reachability_ipv4_targets: list[str] = ["1.1.1.1", "8.8.8.8"]
+    reachability_ipv6_targets: list[str] = [
+        "2606:4700:4700::1111",
+        "2001:4860:4860::8888",
+    ]
 
 
 @lru_cache

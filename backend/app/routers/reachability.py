@@ -1,13 +1,17 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
+from app.db.session import get_db
 from app.schemas.reachability import ExternalReachabilityRead
-from app.services.mock_data import get_reachability_latest
+from app.schemas.settings import ReachabilitySettings
+from app.services import reachability as reachability_service
 
 router = APIRouter(prefix="/api/v1/reachability", tags=["reachability"])
 
 
 @router.get("/latest", response_model=ExternalReachabilityRead)
-def read_reachability_latest(
-    scenario: str | None = Query(default=None, description="Mock scenario override"),
-) -> ExternalReachabilityRead:
-    return get_reachability_latest(scenario)
+def read_reachability_latest(db: Session = Depends(get_db)) -> ExternalReachabilityRead:
+    result = reachability_service.get_latest_reachability(db)
+    if result is None:
+        raise HTTPException(status_code=404, detail="No reachability data yet")
+    return result
