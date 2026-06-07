@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.models.device import Device, LatestStatus
 from app.schemas.device import (
+    BulkDeviceDelete,
     BulkDeviceUpdate,
     DeviceCreate,
     DeviceRead,
@@ -155,6 +156,36 @@ async def poll_device_now(db: Session, device_id: str) -> DeviceStatusRead:
     return status
 
 
+EXPORT_CSV_FIELDS = [
+    "name",
+    "hostname",
+    "device_type",
+    "tags",
+    "important_flag",
+    "management_ip",
+    "connector_enabled",
+]
+
+
+def export_devices_csv(db: Session) -> str:
+    buffer = io.StringIO()
+    writer = csv.DictWriter(buffer, fieldnames=EXPORT_CSV_FIELDS)
+    writer.writeheader()
+    for device in db.query(Device).order_by(Device.name).all():
+        writer.writerow(
+            {
+                "name": device.name,
+                "hostname": device.hostname,
+                "device_type": device.device_type,
+                "tags": ",".join(device.tags or []),
+                "important_flag": "true" if device.important_flag else "false",
+                "management_ip": device.management_ip or "",
+                "connector_enabled": "true" if device.connector_enabled else "false",
+            }
+        )
+    return buffer.getvalue()
+
+
 def bulk_update_devices(db: Session, payload: BulkDeviceUpdate) -> int:
     if not payload.device_ids:
         return 0
@@ -181,6 +212,14 @@ def delete_device(db: Session, device_id: str) -> bool:
     db.delete(device)
     db.commit()
     return True
+
+
+def bulk_delete_devices(db: Session, payload: BulkDeviceDelete) -> int:
+    deleted = 0
+    for device_id in payload.device_ids:
+        if delete_device(db, device_id):
+            deleted += 1
+    return deleted
 
 
 def import_devices_csv(db: Session, content: str) -> int:

@@ -70,8 +70,10 @@ Authoritative API shapes for Datacenter Dashboard. Changes require Lead Architec
 - `GET /api/v1/dashboards/{id}/export`
 - `POST /api/v1/dashboards/import`
 - `GET/POST/PUT/DELETE /api/v1/devices`
+- `GET /api/v1/devices/export` — CSV download (import-compatible format)
 - `POST /api/v1/devices/import` (CSV)
 - `POST /api/v1/devices/bulk` — bulk connector/important updates
+- `POST /api/v1/devices/bulk-delete` — bulk device removal
 - `POST /api/v1/devices/{id}/poll` — on-demand connector poll
 - `GET /api/v1/settings/collector/status` — scheduler health snapshot
 

@@ -73,6 +73,36 @@ export function bulkUpdateDevices(payload: BulkDeviceUpdate) {
   })
 }
 
+export function bulkDeleteDevices(deviceIds: string[]) {
+  return fetchJson<{ deleted: number }>('/api/v1/devices/bulk-delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ device_ids: deviceIds }),
+  })
+}
+
+export function deleteDevice(deviceId: string) {
+  return fetch(`${API_BASE}/api/v1/devices/${deviceId}`, { method: 'DELETE' }).then((response) => {
+    if (!response.ok) {
+      throw new Error(`API error ${response.status}: /api/v1/devices/${deviceId}`)
+    }
+  })
+}
+
+export async function downloadDevicesExport() {
+  const response = await fetch('/api/v1/devices/export')
+  if (!response.ok) {
+    throw new Error(`API error ${response.status}: /api/v1/devices/export`)
+  }
+  const blob = await response.blob()
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = 'devices-export.csv'
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
 export function updateDevice(deviceId: string, payload: DeviceUpdate) {
   return fetchJson<Device>(`/api/v1/devices/${deviceId}`, {
     method: 'PUT',

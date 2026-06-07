@@ -37,6 +37,7 @@ python3 -m pip install --user --break-system-packages -r backend/requirements.tx
 ```bash
 cd backend && TESTING=true PYTHONPATH=. python3 -m pytest -q
 cd frontend && npm run test && npm run build
+make smoke-test   # requires running API on :8000
 ```
 
 ## Configuration

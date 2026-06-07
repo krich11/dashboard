@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { pollDevice, updateDevice } from '../../api/client'
+import { deleteDevice, pollDevice, updateDevice } from '../../api/client'
 import type { DeviceUpdate, DeviceWithStatus } from '../../types/api'
 
 const DEVICE_TYPES = ['hpe_ilorest', 'juniper', 'aruba', 'linux_ssh']
@@ -23,6 +23,7 @@ export function DeviceDetailModal({ device, onClose }: Props) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [pollMessage, setPollMessage] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   useEffect(() => {
     setForm({
@@ -56,6 +57,17 @@ export function DeviceDetailModal({ device, onClose }: Props) {
       }))
       setPollMessage('Device saved.')
     },
+  })
+
+  const remove = useMutation({
+    mutationFn: () => deleteDevice(device.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['devices-with-status'] })
+      queryClient.invalidateQueries({ queryKey: ['high-level'] })
+      onClose()
+    },
+    onError: (err) =>
+      setPollMessage(err instanceof Error ? err.message : 'Delete failed'),
   })
 
   const poll = useMutation({
@@ -179,6 +191,34 @@ export function DeviceDetailModal({ device, onClose }: Props) {
           {pollMessage && <p className="settings-hint">{pollMessage}</p>}
 
           <div className="modal-actions">
+            {!confirmDelete ? (
+              <button
+                type="button"
+                className="inline-btn danger"
+                onClick={() => setConfirmDelete(true)}
+              >
+                Delete
+              </button>
+            ) : (
+              <>
+                <span className="settings-hint">Delete {device.name}?</span>
+                <button
+                  type="button"
+                  className="inline-btn danger"
+                  onClick={() => remove.mutate()}
+                  disabled={remove.isPending}
+                >
+                  {remove.isPending ? 'Deleting…' : 'Confirm delete'}
+                </button>
+                <button
+                  type="button"
+                  className="inline-btn"
+                  onClick={() => setConfirmDelete(false)}
+                >
+                  Cancel
+                </button>
+              </>
+            )}
             <button
               type="button"
               className="inline-btn"

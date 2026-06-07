@@ -24,6 +24,10 @@ class BulkDeviceUpdate(BaseModel):
     important_flag: bool | None = None
 
 
+class BulkDeviceDelete(BaseModel):
+    device_ids: list[str]
+
+
 class DeviceUpdate(BaseModel):
     name: str | None = None
     hostname: str | None = None

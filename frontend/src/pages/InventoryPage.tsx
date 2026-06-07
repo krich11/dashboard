@@ -1,6 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useRef, useState } from 'react'
-import { bulkUpdateDevices, importDevicesCsv, updateDevice } from '../api/client'
+import {
+  bulkDeleteDevices,
+  bulkUpdateDevices,
+  downloadDevicesExport,
+  importDevicesCsv,
+  updateDevice,
+} from '../api/client'
 import { AddDeviceModal } from '../components/inventory/AddDeviceModal'
 import { DeviceDetailModal } from '../components/inventory/DeviceDetailModal'
 import { useDevicesWithStatus } from '../hooks/useDashboardData'
@@ -65,6 +71,25 @@ export function InventoryPage() {
       setBulkMessage(err instanceof Error ? err.message : 'Bulk update failed'),
   })
 
+  const bulkDelete = useMutation({
+    mutationFn: bulkDeleteDevices,
+    onSuccess: (result) => {
+      setBulkMessage(`Deleted ${result.deleted} device(s).`)
+      setCheckedIds(new Set())
+      queryClient.invalidateQueries({ queryKey: ['devices-with-status'] })
+      queryClient.invalidateQueries({ queryKey: ['high-level'] })
+    },
+    onError: (err) =>
+      setBulkMessage(err instanceof Error ? err.message : 'Bulk delete failed'),
+  })
+
+  const exportCsv = useMutation({
+    mutationFn: downloadDevicesExport,
+    onSuccess: () => setImportMessage('Exported devices CSV.'),
+    onError: (err) =>
+      setImportMessage(err instanceof Error ? err.message : 'Export failed'),
+  })
+
   const visibleIds = devices.data?.map((d) => d.id) ?? []
   const allVisibleChecked =
     visibleIds.length > 0 && visibleIds.every((id) => checkedIds.has(id))
@@ -112,6 +137,14 @@ export function InventoryPage() {
               e.target.value = ''
             }}
           />
+          <button
+            type="button"
+            className="inline-btn"
+            onClick={() => exportCsv.mutate()}
+            disabled={exportCsv.isPending}
+          >
+            {exportCsv.isPending ? 'Exporting…' : 'Export CSV'}
+          </button>
           <button
             type="button"
             className="inline-btn"
@@ -167,6 +200,18 @@ export function InventoryPage() {
             disabled={bulkUpdate.isPending}
           >
             Mark important
+          </button>
+          <button
+            type="button"
+            className="inline-btn danger"
+            onClick={() => {
+              if (window.confirm(`Delete ${checkedIds.size} selected device(s)?`)) {
+                bulkDelete.mutate([...checkedIds])
+              }
+            }}
+            disabled={bulkDelete.isPending}
+          >
+            Delete selected
           </button>
           <button type="button" className="inline-btn" onClick={() => setCheckedIds(new Set())}>
             Clear

@@ -1,4 +1,4 @@
-.PHONY: dev backend frontend test build seed-mocks
+.PHONY: dev backend frontend test build seed-mocks smoke-test
 
 PYTHON ?= python3
 PIP ?= $(PYTHON) -m pip
@@ -25,3 +25,7 @@ build:
 
 seed-mocks:
 	$(PYTHON) scripts/seed_mocks.py
+
+smoke-test:
+	chmod +x scripts/smoke_test.sh
+	./scripts/smoke_test.sh

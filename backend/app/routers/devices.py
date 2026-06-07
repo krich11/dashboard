@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
+from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
 
 from app.collectors.helpers import ConnectorSkipped
 from app.db.session import get_db
 from app.schemas.device import (
+    BulkDeviceDelete,
     BulkDeviceUpdate,
     DeviceCreate,
     DeviceRead,
@@ -22,6 +24,16 @@ def list_devices(
     db: Session = Depends(get_db),
 ) -> list[DeviceRead]:
     return device_service.list_devices(db, important=important)
+
+
+@router.get("/export", response_class=PlainTextResponse)
+def export_devices(db: Session = Depends(get_db)) -> PlainTextResponse:
+    content = device_service.export_devices_csv(db)
+    return PlainTextResponse(
+        content=content,
+        media_type="text/csv",
+        headers={"Content-Disposition": 'attachment; filename="devices-export.csv"'},
+    )
 
 
 @router.get("/with-status", response_model=list[DeviceWithStatus])
@@ -89,6 +101,12 @@ def import_devices(file: UploadFile = File(...), db: Session = Depends(get_db)) 
 def bulk_update_devices(payload: BulkDeviceUpdate, db: Session = Depends(get_db)) -> dict:
     updated = device_service.bulk_update_devices(db, payload)
     return {"updated": updated}
+
+
+@router.post("/bulk-delete")
+def bulk_delete_devices(payload: BulkDeviceDelete, db: Session = Depends(get_db)) -> dict:
+    deleted = device_service.bulk_delete_devices(db, payload)
+    return {"deleted": deleted}
 
 
 @router.post("/{device_id}/poll", response_model=DeviceStatusRead)
