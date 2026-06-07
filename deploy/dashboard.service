@@ -1,0 +1,17 @@
+[Unit]
+Description=Datacenter Dashboard API
+After=network.target
+
+[Service]
+Type=simple
+User=dashboard
+Group=dashboard
+WorkingDirectory=/opt/dashboard
+EnvironmentFile=/opt/dashboard/.env
+Environment=PYTHONPATH=/opt/dashboard/backend
+ExecStart=/usr/bin/python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

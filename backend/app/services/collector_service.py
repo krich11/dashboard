@@ -12,6 +12,7 @@ from app.collectors.mock import MockConnector
 from app.config import get_settings
 from app.db.session import SessionLocal
 from app.models.device import Device, LatestStatus
+from app.services.settings_service import get_collector_settings
 
 
 @dataclass
@@ -76,6 +77,7 @@ class CollectorService:
 
     async def _poll_one(self, db: Session, device: Device) -> None:
         settings = get_settings()
+        collector = get_collector_settings(db)
         assert self._semaphore is not None
         async with self._semaphore:
             connector = MockConnector(db)
@@ -102,15 +104,17 @@ class CollectorService:
                     )
                 state.failures = 0
                 state.circuit_open = False
-                state.next_poll_at = datetime.now(UTC) + timedelta(seconds=settings.collector_interval_sec)
+                state.next_poll_at = datetime.now(UTC) + timedelta(
+                    seconds=collector.interval_sec
+                )
             except Exception as exc:  # noqa: BLE001
                 state.failures += 1
                 backoff = min(
-                    settings.collector_default_backoff_sec * state.failures,
-                    settings.collector_max_backoff_sec,
+                    collector.default_backoff_sec * state.failures,
+                    collector.max_backoff_sec,
                 )
                 state.next_poll_at = datetime.now(UTC) + timedelta(seconds=backoff)
-                if state.failures >= settings.collector_circuit_breaker_threshold:
+                if state.failures >= collector.circuit_breaker_threshold:
                     state.circuit_open = True
                 existing = db.query(LatestStatus).filter(LatestStatus.device_id == device.id).first()
                 if existing:

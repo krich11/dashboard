@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.db.base import Base
 from app.db.session import SessionLocal, engine
-from app.routers import dashboards, devices, health, reachability, status
+from app.routers import dashboards, devices, health, reachability, status, widgets
 from app.routers import settings as settings_router
 from app.services.collector_service import collector_service
 from app.services.seed import seed_from_mocks
@@ -44,6 +44,7 @@ def create_app() -> FastAPI:
     app.include_router(devices.router)
     app.include_router(dashboards.router)
     app.include_router(settings_router.router)
+    app.include_router(widgets.router)
     return app
 
 

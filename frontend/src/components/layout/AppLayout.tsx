@@ -6,6 +6,7 @@ const navItems = [
   { to: '/inventory', label: 'Inventory' },
   { to: '/dashboards', label: 'Dashboards' },
   { to: '/settings', label: 'Settings' },
+  { to: '/help', label: 'Help' },
 ]
 
 export function AppLayout() {

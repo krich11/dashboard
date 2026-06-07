@@ -1,11 +1,16 @@
 import type {
+  CollectorSettings,
   Dashboard,
   DashboardExport,
   Device,
   DeviceWithStatus,
+  EncryptionStatus,
+  EncryptionTestResult,
   ExternalReachability,
   HighLevelSummary,
   IssueItem,
+  ReachabilityHistoryPoint,
+  ReachabilitySettings,
   WidgetInstance,
 } from '../types/api'
 
@@ -121,4 +126,46 @@ export function getIssues(importantOnly = false) {
 
 export function getHealth() {
   return fetchJson<{ status: string; mock_mode: boolean; mock_scenario: string }>('/health')
+}
+
+export function getReachabilitySettings() {
+  return fetchJson<ReachabilitySettings>('/api/v1/settings/reachability')
+}
+
+export function updateReachabilitySettings(payload: ReachabilitySettings) {
+  return fetchJson<ReachabilitySettings>('/api/v1/settings/reachability', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+}
+
+export function getCollectorSettings() {
+  return fetchJson<CollectorSettings>('/api/v1/settings/collector')
+}
+
+export function updateCollectorSettings(payload: CollectorSettings) {
+  return fetchJson<CollectorSettings>('/api/v1/settings/collector', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+}
+
+export function getEncryptionStatus() {
+  return fetchJson<EncryptionStatus>('/api/v1/settings/encryption')
+}
+
+export function testEncryption(testValue: string) {
+  return fetchJson<EncryptionTestResult>('/api/v1/settings/encryption/test', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ test_value: testValue }),
+  })
+}
+
+export function getReachabilityHistory(hours = 24) {
+  return fetchJson<ReachabilityHistoryPoint[]>(
+    `/api/v1/reachability/history?hours=${hours}&limit=100`,
+  )
 }

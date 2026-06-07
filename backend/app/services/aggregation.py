@@ -7,6 +7,7 @@ from app.models.device import Device, LatestStatus
 from app.models.reachability import ExternalReachabilityResult
 from app.schemas.status import HighLevelSummary
 from app.services.normalization import is_device_up
+from app.services.settings_service import get_collector_settings
 
 
 def _internet_health(reach: ExternalReachabilityResult | None, require_both: bool) -> str:
@@ -31,6 +32,7 @@ def _internet_summary(reach: ExternalReachabilityResult | None) -> str:
 
 def compute_high_level_summary(db: Session) -> HighLevelSummary:
     settings = get_settings()
+    collector = get_collector_settings(db)
     devices = (
         db.query(Device)
         .options(joinedload(Device.latest_status))
@@ -48,7 +50,9 @@ def compute_high_level_summary(db: Session) -> HighLevelSummary:
     important_down = 0
     for device in devices:
         status: LatestStatus | None = device.latest_status
-        if status is None or not is_device_up(status.overall, status.timestamp, settings.status_staleness_sec):
+        if status is None or not is_device_up(
+            status.overall, status.timestamp, collector.status_staleness_sec
+        ):
             important_down += 1
     important_total = len(devices)
     important_up = important_total - important_down

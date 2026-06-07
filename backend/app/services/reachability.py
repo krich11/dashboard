@@ -1,8 +1,14 @@
+from datetime import UTC, datetime, timedelta
+
 from sqlalchemy.orm import Session
 
 from app.models.reachability import ExternalReachabilityResult
 from app.models.settings import AppSettings
-from app.schemas.reachability import ExternalReachabilityRead, ReachabilityTargetResult
+from app.schemas.reachability import (
+    ExternalReachabilityRead,
+    ReachabilityHistoryPoint,
+    ReachabilityTargetResult,
+)
 from app.schemas.settings import ReachabilitySettings
 
 
@@ -50,3 +56,25 @@ def update_reachability_settings(db: Session, payload: ReachabilitySettings) -> 
         row.value = payload.model_dump()
     db.commit()
     return payload
+
+
+def get_reachability_history(
+    db: Session, hours: int = 24, limit: int = 100
+) -> list[ReachabilityHistoryPoint]:
+    since = datetime.now(UTC).replace(tzinfo=None) - timedelta(hours=hours)
+    rows = (
+        db.query(ExternalReachabilityResult)
+        .filter(ExternalReachabilityResult.timestamp >= since)
+        .order_by(ExternalReachabilityResult.timestamp.asc())
+        .limit(limit)
+        .all()
+    )
+    return [
+        ReachabilityHistoryPoint(
+            timestamp=row.timestamp,
+            overall=row.overall,
+            ipv4_ok=row.ipv4_ok,
+            ipv6_ok=row.ipv6_ok,
+        )
+        for row in rows
+    ]

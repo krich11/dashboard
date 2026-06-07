@@ -17,3 +17,10 @@ class ExternalReachabilityRead(BaseModel):
     ipv6_targets: list[ReachabilityTargetResult]
     overall: str
     timestamp: datetime
+
+
+class ReachabilityHistoryPoint(BaseModel):
+    timestamp: datetime
+    overall: str
+    ipv4_ok: bool
+    ipv6_ok: bool

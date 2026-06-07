@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react'
 import { ImportantDevicesStatusGrid } from './ImportantDevicesStatusGrid'
+import { InternetHealthTrend } from './InternetHealthTrend'
 import { InternetReachability } from './InternetReachability'
 import { InventoryTableWidget } from './InventoryTable'
 import { IssuesList } from './IssuesList'
@@ -8,6 +9,7 @@ import { UpDownOverallStatus } from './UpDownOverallStatus'
 export type WidgetType =
   | 'UpDownOverallStatus'
   | 'InternetReachability'
+  | 'InternetHealthTrend'
   | 'ImportantDevicesStatusGrid'
   | 'IssuesList'
   | 'InventoryTable'
@@ -39,6 +41,15 @@ export const widgetRegistry: WidgetDefinition[] = [
     priority: 'P0',
     dataSource: '/api/v1/reachability/latest',
     component: InternetReachability,
+  },
+  {
+    type: 'InternetHealthTrend',
+    title: 'Internet Health Trend',
+    description_for_llm:
+      'Sparkline of internet reachability over time. Config: title, hours (number, default 24), refreshIntervalSec (number).',
+    priority: 'P1',
+    dataSource: '/api/v1/reachability/history',
+    component: InternetHealthTrend,
   },
   {
     type: 'ImportantDevicesStatusGrid',

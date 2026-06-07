@@ -93,3 +93,42 @@ export interface Dashboard {
   updated_at: string
   widgets: WidgetInstance[]
 }
+
+export interface ReachabilitySettings {
+  ipv4_targets: string[]
+  ipv6_targets: string[]
+  interval_sec: number
+  timeout_sec: number
+  method: 'ping' | 'http'
+  require_both_families: boolean
+  http_url_v4: string
+  http_url_v6: string
+}
+
+export interface CollectorSettings {
+  interval_sec: number
+  concurrency: number
+  default_backoff_sec: number
+  max_backoff_sec: number
+  circuit_breaker_threshold: number
+  status_staleness_sec: number
+}
+
+export interface EncryptionStatus {
+  configured: boolean
+  is_dev_default: boolean
+  key_source: string
+  message: string
+}
+
+export interface EncryptionTestResult {
+  ok: boolean
+  message: string
+}
+
+export interface ReachabilityHistoryPoint {
+  timestamp: string
+  overall: string
+  ipv4_ok: boolean
+  ipv6_ok: boolean
+}

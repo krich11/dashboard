@@ -44,13 +44,34 @@ Authoritative API shapes for Datacenter Dashboard. Changes require Lead Architec
 }
 ```
 
-## API endpoints (Phase 1)
+## ReachabilityHistoryPoint
+
+```json
+{
+  "timestamp": "ISO-8601",
+  "overall": "ok|degraded|down",
+  "ipv4_ok": true,
+  "ipv6_ok": false
+}
+```
+
+## API endpoints
 
 - `GET /api/v1/status/high-level` — computed from DB
 - `GET /api/v1/status/issues`
 - `GET /api/v1/reachability/latest`
+- `GET /api/v1/reachability/history?hours=24&limit=100`
 - `GET/PUT /api/v1/settings/reachability`
+- `GET/PUT /api/v1/settings/collector`
+- `GET /api/v1/settings/encryption`
+- `POST /api/v1/settings/encryption/test`
+- `GET /api/v1/widgets/catalog`
+- `GET/POST/PUT/DELETE /api/v1/dashboards`
+- `GET /api/v1/dashboards/{id}/export`
+- `POST /api/v1/dashboards/import`
 - `GET/POST/PUT/DELETE /api/v1/devices`
 - `POST /api/v1/devices/import` (CSV)
 
 Mock scenarios (`all_clear`, `devices_down`, `internet_degraded`, `mixed`) drive `MockConnector` via `MOCK_SCENARIO` env var.
+
+Dashboard JSON schemas: `backend/schemas/json/dashboard.json`, `widget-instance.json`. See `docs/LLM_INTEGRATION.md`.

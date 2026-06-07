@@ -564,3 +564,92 @@ a {
   gap: 8px;
   justify-content: flex-end;
 }
+
+.settings-grid,
+.help-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.settings-card h3,
+.help-grid h3 {
+  margin-top: 0;
+}
+
+.settings-form label,
+.settings-form select,
+.settings-form input,
+.settings-form textarea {
+  display: block;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.settings-form input,
+.settings-form select,
+.settings-form textarea {
+  margin-top: 4px;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #2a3a5c;
+  background: #0f1728;
+  color: #e8edf5;
+}
+
+.settings-hint {
+  color: #9db0d3;
+  font-size: 0.9rem;
+}
+
+.help-steps {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.help-steps li {
+  margin-bottom: 8px;
+}
+
+.encryption-wizard code {
+  background: #0f1728;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.trend-chart {
+  width: 100%;
+  height: 80px;
+  border-radius: 8px;
+  border: 1px solid #2a3a5c;
+  background: #0b1220;
+}
+
+.trend-legend {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: #9db0d3;
+}
+
+.trend-legend .dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.trend-legend .dot.ok {
+  background: #3fb950;
+}
+
+.trend-legend .dot.degraded {
+  background: #d29922;
+}
+
+.trend-legend .dot.down {
+  background: #f85149;
+}
