@@ -1,9 +1,12 @@
 from contextlib import asynccontextmanager
 
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
-from app.config import get_settings
+from app.config import ROOT_DIR, get_settings
 from app.db.base import Base
 from app.db.session import SessionLocal, engine
 from app.routers import dashboards, devices, health, reachability, status, widgets
@@ -45,6 +48,15 @@ def create_app() -> FastAPI:
     app.include_router(dashboards.router)
     app.include_router(settings_router.router)
     app.include_router(widgets.router)
+
+    static_dir = settings.frontend_static_dir
+    if static_dir is None:
+        default_dist = ROOT_DIR / "frontend" / "dist"
+        if default_dist.is_dir():
+            static_dir = str(default_dist)
+    if static_dir and Path(static_dir).is_dir():
+        app.mount("/", StaticFiles(directory=static_dir, html=True), name="frontend")
+
     return app
 
 

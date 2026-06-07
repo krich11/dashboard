@@ -8,7 +8,8 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy.orm import Session
 
 from app.collectors.external_reachability import ExternalReachabilityMonitor
-from app.collectors.mock import MockConnector
+from app.collectors.factory import get_connector
+from app.collectors.helpers import ConnectorSkipped
 from app.config import get_settings
 from app.db.session import SessionLocal
 from app.models.device import Device, LatestStatus
@@ -60,7 +61,10 @@ class CollectorService:
     async def _poll_devices_job(self) -> None:
         db = SessionLocal()
         try:
+            settings = get_settings()
             devices = db.query(Device).all()
+            if not settings.mock_mode:
+                devices = [d for d in devices if d.connector_enabled]
             now = datetime.now(UTC)
             due = [
                 d
@@ -76,13 +80,12 @@ class CollectorService:
             db.close()
 
     async def _poll_one(self, db: Session, device: Device) -> None:
-        settings = get_settings()
         collector = get_collector_settings(db)
         assert self._semaphore is not None
         async with self._semaphore:
-            connector = MockConnector(db)
             state = self._backoff.setdefault(device.id, DeviceBackoffState())
             try:
+                connector = get_connector(db, device)
                 status = await connector.poll(device.id)
                 existing = db.query(LatestStatus).filter(LatestStatus.device_id == device.id).first()
                 if existing:
@@ -107,6 +110,8 @@ class CollectorService:
                 state.next_poll_at = datetime.now(UTC) + timedelta(
                     seconds=collector.interval_sec
                 )
+            except ConnectorSkipped:
+                return
             except Exception as exc:  # noqa: BLE001
                 state.failures += 1
                 backoff = min(

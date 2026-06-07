@@ -33,6 +33,7 @@ class Settings(BaseSettings):
         "2606:4700:4700::1111",
         "2001:4860:4860::8888",
     ]
+    frontend_static_dir: str | None = None
 
 
 @lru_cache

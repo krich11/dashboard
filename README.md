@@ -77,6 +77,10 @@ pip install -r /opt/dashboard/backend/requirements.txt
 
 Set `MOCK_MODE=false`, a strong `DASHBOARD_SECRET_KEY`, and production `DATABASE_URL` in `/opt/dashboard/.env`.
 
+Enable polling per device by setting `connector_enabled=true` and storing encrypted credentials via the device API. Supported types: `hpe_ilorest` (Redfish/httpx), `juniper` (junos-eznc), `aruba` (REST or ping), `linux_ssh` (paramiko or ping fallback).
+
+When `frontend/dist` exists, the API serves the built SPA on the same port (no separate nginx required for small deployments).
+
 ### 3. systemd
 
 ```bash

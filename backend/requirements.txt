@@ -9,6 +9,10 @@ apscheduler>=3.10.4
 icmplib>=3.0.4
 python-multipart>=0.0.12
 
+# Production device connectors (install when MOCK_MODE=false)
+paramiko>=3.5.0
+junos-eznc>=2.7.0
+
 # Dev / test
 pytest>=8.3.0
 pytest-asyncio>=0.24.0
