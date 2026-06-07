@@ -124,3 +124,293 @@ a {
 .registry-list li {
   margin-bottom: 8px;
 }
+
+.header-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #2a3a5c;
+  background: #111a2d;
+  color: #dbe7ff;
+  cursor: pointer;
+}
+
+.refresh-btn .spin {
+  animation: spin 0.6s linear;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.overview-widgets {
+  display: grid;
+  gap: 16px;
+}
+
+.widget {
+  background: rgba(16, 24, 40, 0.95);
+  border: 1px solid #2a3a5c;
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.widget-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #9db0d3;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.widget-muted {
+  color: #9db0d3;
+}
+
+.widget-error {
+  color: #ff7b72;
+}
+
+.widget-timestamp {
+  color: #8aa0c8;
+  font-size: 0.85rem;
+}
+
+.updown-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.updown-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.75rem;
+  color: #8aa0c8;
+  text-transform: uppercase;
+}
+
+.text-danger {
+  color: #ff7b72;
+}
+
+.health-ok {
+  color: #3dd68c;
+}
+
+.health-degraded,
+.health-warning {
+  color: #f2cc60;
+}
+
+.health-down,
+.health-critical {
+  color: #ff7b72;
+}
+
+.internet-summary-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.family-status {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #2a3a5c;
+}
+
+.family-status.ok {
+  border-color: #2f8f62;
+}
+
+.family-status.bad {
+  border-color: #9a4c4c;
+}
+
+.overall-pill {
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  border: 1px solid #2a3a5c;
+}
+
+.overall-ok {
+  color: #3dd68c;
+}
+
+.overall-degraded {
+  color: #f2cc60;
+}
+
+.overall-down {
+  color: #ff7b72;
+}
+
+.target-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.target-grid h4 {
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+  color: #9db0d3;
+}
+
+.target-grid ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.target-ok {
+  color: #b8c7e6;
+}
+
+.target-bad {
+  color: #ff7b72;
+}
+
+.inventory-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.inventory-filters input,
+.inventory-filters select {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #2a3a5c;
+  background: #0f1728;
+  color: #e8edf5;
+}
+
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #b8c7e6;
+}
+
+.inventory-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.inventory-table th,
+.inventory-table td {
+  text-align: left;
+  padding: 10px 8px;
+  border-bottom: 1px solid #22304d;
+}
+
+.inventory-table th {
+  color: #9db0d3;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:hover {
+  background: rgba(31, 111, 235, 0.08);
+}
+
+.status-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.status-ok {
+  background: rgba(61, 214, 140, 0.15);
+  color: #3dd68c;
+}
+
+.status-warning {
+  background: rgba(242, 204, 96, 0.15);
+  color: #f2cc60;
+}
+
+.status-critical,
+.status-down {
+  background: rgba(255, 123, 114, 0.15);
+  color: #ff7b72;
+}
+
+.status-unknown {
+  background: rgba(141, 159, 190, 0.15);
+  color: #9db0d3;
+}
+
+.inline-btn {
+  border: 1px solid #2a3a5c;
+  background: #111a2d;
+  color: #dbe7ff;
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 8, 18, 0.72);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  z-index: 50;
+}
+
+.modal {
+  width: min(520px, 100%);
+}
+
+.metrics-block {
+  background: #0b1220;
+  border: 1px solid #2a3a5c;
+  border-radius: 8px;
+  padding: 10px;
+  overflow: auto;
+  font-size: 0.8rem;
+}

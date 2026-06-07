@@ -1,3 +1,7 @@
+import type { ComponentType } from 'react'
+import { InternetReachability } from './InternetReachability'
+import { UpDownOverallStatus } from './UpDownOverallStatus'
+
 export type WidgetType =
   | 'UpDownOverallStatus'
   | 'InternetReachability'
@@ -11,6 +15,7 @@ export interface WidgetDefinition {
   description_for_llm: string
   priority: 'P0' | 'P1'
   dataSource: string
+  component?: ComponentType<{ config?: Record<string, unknown> }>
 }
 
 export const widgetRegistry: WidgetDefinition[] = [
@@ -21,6 +26,7 @@ export const widgetRegistry: WidgetDefinition[] = [
       'Large operational banner showing important device up/down counts and internet health summary.',
     priority: 'P0',
     dataSource: '/api/v1/status/high-level',
+    component: UpDownOverallStatus,
   },
   {
     type: 'InternetReachability',
@@ -29,6 +35,7 @@ export const widgetRegistry: WidgetDefinition[] = [
       'Shows IPv4 and IPv6 reachability status with per-target results and last check times.',
     priority: 'P0',
     dataSource: '/api/v1/reachability/latest',
+    component: InternetReachability,
   },
   {
     type: 'ImportantDevicesStatusGrid',
@@ -52,3 +59,7 @@ export const widgetRegistry: WidgetDefinition[] = [
     dataSource: '/api/v1/devices',
   },
 ]
+
+export function getWidgetComponent(type: string) {
+  return widgetRegistry.find((w) => w.type === type)?.component
+}

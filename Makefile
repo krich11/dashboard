@@ -18,6 +18,7 @@ frontend:
 
 test:
 	cd $(BACKEND_DIR) && $(PYTHON) -m pytest -q
+	cd $(FRONTEND_DIR) && $(NPM) run test
 
 build:
 	cd $(FRONTEND_DIR) && $(NPM) run build

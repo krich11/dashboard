@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppLayout } from './components/layout/AppLayout'
+import { InventoryPage } from './pages/InventoryPage'
 import { OverviewPage } from './pages/OverviewPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import './index.css'
@@ -14,15 +15,7 @@ function App() {
         <Routes>
           <Route element={<AppLayout />}>
             <Route index element={<OverviewPage />} />
-            <Route
-              path="inventory"
-              element={
-                <PlaceholderPage
-                  title="Inventory"
-                  description="Searchable device inventory arrives in Phase 2."
-                />
-              }
-            />
+            <Route path="inventory" element={<InventoryPage />} />
             <Route
               path="dashboards"
               element={

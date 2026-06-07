@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.schemas.device import DeviceCreate, DeviceRead, DeviceStatusRead, DeviceUpdate
+from app.schemas.device import DeviceCreate, DeviceRead, DeviceStatusRead, DeviceUpdate, DeviceWithStatus
 from app.services import devices as device_service
 
 router = APIRouter(prefix="/api/v1/devices", tags=["devices"])
@@ -14,6 +14,23 @@ def list_devices(
     db: Session = Depends(get_db),
 ) -> list[DeviceRead]:
     return device_service.list_devices(db, important=important)
+
+
+@router.get("/with-status", response_model=list[DeviceWithStatus])
+def list_devices_with_status(
+    important: bool | None = Query(default=None),
+    device_type: str | None = Query(default=None),
+    status: str | None = Query(default=None),
+    search: str | None = Query(default=None),
+    db: Session = Depends(get_db),
+) -> list[DeviceWithStatus]:
+    return device_service.list_devices_with_status(
+        db,
+        important=important,
+        device_type=device_type,
+        status=status,
+        search=search,
+    )
 
 
 @router.get("/{device_id}", response_model=DeviceRead)

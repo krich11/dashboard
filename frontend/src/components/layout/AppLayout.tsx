@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { RefreshControl } from './RefreshControl'
 
 const navItems = [
   { to: '/', label: 'Overview' },
@@ -15,18 +16,21 @@ export function AppLayout() {
           <p className="eyebrow">Datacenter Dashboard</p>
           <h1>Operations Console</h1>
         </div>
-        <nav className="app-nav">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
-              end={item.to === '/'}
-            >
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
+        <div className="header-actions">
+          <RefreshControl />
+          <nav className="app-nav">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+                end={item.to === '/'}
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
+        </div>
       </header>
       <main className="app-main">
         <Outlet />

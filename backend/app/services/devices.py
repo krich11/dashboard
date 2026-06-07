@@ -23,6 +23,47 @@ def list_devices(db: Session, important: bool | None = None) -> list[DeviceRead]
     return [DeviceRead.model_validate(d) for d in query.order_by(Device.name).all()]
 
 
+def list_devices_with_status(
+    db: Session,
+    important: bool | None = None,
+    device_type: str | None = None,
+    status: str | None = None,
+    search: str | None = None,
+) -> list[DeviceWithStatus]:
+    query = db.query(Device).options(joinedload(Device.latest_status))
+    if important is not None:
+        query = query.filter(Device.important_flag.is_(important))
+    if device_type:
+        query = query.filter(Device.device_type == device_type)
+    if search:
+        like = f"%{search.lower()}%"
+        query = query.filter(
+            (Device.name.ilike(like)) | (Device.hostname.ilike(like))
+        )
+    results: list[DeviceWithStatus] = []
+    for device in query.order_by(Device.name).all():
+        status_row = device.latest_status
+        device_status = None
+        if status_row:
+            device_status = DeviceStatusRead(
+                device_id=status_row.device_id,
+                overall=status_row.overall,
+                message=status_row.message,
+                metrics=status_row.metrics,
+                details=status_row.details,
+                timestamp=status_row.timestamp,
+            )
+        if status and (device_status is None or device_status.overall != status):
+            continue
+        results.append(
+            DeviceWithStatus(
+                **DeviceRead.model_validate(device).model_dump(),
+                status=device_status,
+            )
+        )
+    return results
+
+
 def get_device(db: Session, device_id: str) -> Device | None:
     return db.get(Device, device_id)
 

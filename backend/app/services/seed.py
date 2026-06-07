@@ -7,6 +7,7 @@ from app.models.device import Device, LatestStatus
 from app.models.reachability import ExternalReachabilityResult
 from app.models.settings import AppSettings
 from app.schemas.settings import ReachabilitySettings
+from app.services.dashboards import seed_default_dashboard
 from app.services.mock_data import get_device_statuses, get_devices, get_reachability_latest
 
 
@@ -69,3 +70,4 @@ def seed_from_mocks(db: Session) -> None:
     )
     db.add(AppSettings(key="reachability", value=reachability_settings.model_dump()))
     db.commit()
+    seed_default_dashboard(db)
