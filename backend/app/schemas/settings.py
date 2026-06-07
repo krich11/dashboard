@@ -52,6 +52,13 @@ class AlertSettings(BaseModel):
     min_interval_sec: int = Field(default=300, ge=60, le=3600)
     format: Literal["json", "slack", "pagerduty"] = "json"
     pagerduty_routing_key: str = ""
+    threshold_important_down: int = Field(
+        default=0,
+        ge=0,
+        le=100,
+        description="Fire threshold alert when important_down >= N (0=disabled)",
+    )
+    threshold_internet_degraded: bool = False
 
 
 class AlertTestResult(BaseModel):

@@ -37,7 +37,15 @@ check "default dashboard" "$BASE_URL/api/v1/dashboards/default" "widgets"
 check "widget catalog" "$BASE_URL/api/v1/widgets/catalog" "UpDownOverallStatus"
 check "collector status" "$BASE_URL/api/v1/settings/collector/status" "total_devices"
 check "history settings" "$BASE_URL/api/v1/settings/history" "raw_days"
-check "system info" "$BASE_URL/api/v1/system/info" '"version":"1.5.2"'
+if curl -sf -X POST "$BASE_URL/api/v1/discovery/scan" \
+  -H "Content-Type: application/json" \
+  -d '{"targets":["127.0.0.1"]}' | grep -q '"candidates"'; then
+  echo "OK   discovery scan"
+else
+  echo "FAIL discovery scan"
+  FAILURES=$((FAILURES + 1))
+fi
+check "system info" "$BASE_URL/api/v1/system/info" '"version":"1.6.0"'
 check "status history" "$BASE_URL/api/v1/status/history" "important_total"
 check "devices export" "$BASE_URL/api/v1/devices/export" "hostname"
 

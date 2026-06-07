@@ -5,7 +5,9 @@ from typing import Any
 import httpx
 from sqlalchemy.orm import Session
 
+from app.models.alert_event import AlertEvent
 from app.models.settings import AppSettings
+from app.schemas.alerts import AlertEventRead
 from app.schemas.settings import AlertSettings, AlertTestResult
 from app.schemas.status import HighLevelSummary
 
@@ -141,6 +143,144 @@ async def send_webhook(
         response.raise_for_status()
 
 
+def record_alert_event(
+    db: Session,
+    *,
+    event_type: str,
+    severity: str,
+    message: str,
+    payload: dict[str, Any],
+) -> AlertEvent:
+    row = AlertEvent(
+        event_type=event_type,
+        severity=severity,
+        message=message,
+        payload=payload,
+        acknowledged=False,
+        created_at=datetime.now(UTC).replace(tzinfo=None),
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def list_alert_events(
+    db: Session, *, limit: int = 50, acknowledged: bool | None = None
+) -> list[AlertEventRead]:
+    query = db.query(AlertEvent).order_by(AlertEvent.created_at.desc())
+    if acknowledged is not None:
+        query = query.filter(AlertEvent.acknowledged.is_(acknowledged))
+    return [AlertEventRead.model_validate(row) for row in query.limit(limit).all()]
+
+
+def acknowledge_alert_event(db: Session, event_id: int) -> AlertEventRead | None:
+    row = db.get(AlertEvent, event_id)
+    if row is None:
+        return None
+    row.acknowledged = True
+    db.commit()
+    db.refresh(row)
+    return AlertEventRead.model_validate(row)
+
+
+def _threshold_json_payload(
+    event_type: str, summary: HighLevelSummary, extra: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "event": event_type,
+        "banner": summary.banner,
+        "banner_text": summary.banner_text,
+        "important_down": summary.important_down,
+        "important_total": summary.important_total,
+        "important_up": summary.important_up,
+        "internet_health": summary.internet_health,
+        "internet_summary": summary.internet_summary,
+        "timestamp": summary.timestamp.isoformat(),
+    }
+    if extra:
+        payload.update(extra)
+    return payload
+
+
+async def _send_threshold_webhook(
+    db: Session,
+    settings: AlertSettings,
+    summary: HighLevelSummary,
+    event_type: str,
+    message: str,
+    severity: str,
+    extra: dict[str, Any] | None = None,
+) -> None:
+    payload = _threshold_json_payload(event_type, summary, extra)
+    record_alert_event(
+        db,
+        event_type=event_type,
+        severity=severity,
+        message=message,
+        payload=payload,
+    )
+    if not settings.enabled or not settings.webhook_url:
+        return
+    async with httpx.AsyncClient(timeout=10) as client:
+        body = build_webhook_payload(settings, summary)
+        body["event"] = event_type
+        body["threshold_message"] = message
+        if extra:
+            body.update(extra)
+        response = await client.post(settings.webhook_url, json=body)
+        response.raise_for_status()
+
+
+async def evaluate_threshold_alerts(db: Session, summary: HighLevelSummary) -> None:
+    settings = get_alert_settings(db)
+    state = _get_alert_state(db)
+
+    down_active = (
+        settings.threshold_important_down > 0
+        and summary.important_down >= settings.threshold_important_down
+    )
+    if down_active and not state.get("threshold_down_active"):
+        message = (
+            f"{summary.important_down} important device(s) down "
+            f"(threshold ≥ {settings.threshold_important_down})"
+        )
+        try:
+            await _send_threshold_webhook(
+                db,
+                settings,
+                summary,
+                "threshold_important_down",
+                message,
+                "critical",
+                {"threshold": settings.threshold_important_down},
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Threshold alert failed: %s", exc)
+    state["threshold_down_active"] = down_active
+
+    internet_active = (
+        settings.threshold_internet_degraded
+        and summary.internet_health not in {"ok"}
+    )
+    if internet_active and not state.get("threshold_internet_active"):
+        message = f"Internet health degraded: {summary.internet_summary}"
+        try:
+            await _send_threshold_webhook(
+                db,
+                settings,
+                summary,
+                "threshold_internet_degraded",
+                message,
+                "warning",
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Threshold alert failed: %s", exc)
+    state["threshold_internet_active"] = internet_active
+
+    _set_alert_state(db, state)
+
+
 async def maybe_send_banner_alert(db: Session, summary: HighLevelSummary) -> None:
     settings = get_alert_settings(db)
     if not settings.enabled or not settings.webhook_url:
@@ -163,10 +303,15 @@ async def maybe_send_banner_alert(db: Session, summary: HighLevelSummary) -> Non
 
     try:
         await send_webhook(settings, summary)
-        _set_alert_state(
+        record_alert_event(
             db,
-            {"last_banner": summary.banner, "last_sent_at": now.isoformat()},
+            event_type="banner_change",
+            severity="critical" if summary.banner in {"devices_down", "mixed"} else "warning",
+            message=summary.banner_text,
+            payload=build_json_payload(summary),
         )
+        merged = {**state, "last_banner": summary.banner, "last_sent_at": now.isoformat()}
+        _set_alert_state(db, merged)
     except Exception as exc:  # noqa: BLE001
         logger.warning("Webhook alert failed: %s", exc)
 

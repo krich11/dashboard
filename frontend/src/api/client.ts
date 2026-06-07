@@ -1,7 +1,10 @@
 import type {
   BulkDeviceUpdate,
+  AlertEvent,
   AlertSettings,
   AlertTestResult,
+  CredentialTestResult,
+  DiscoveryCandidate,
   CollectorSettings,
   CollectorRunResult,
   CollectorStatus,
@@ -281,6 +284,59 @@ export function updateAlertSettings(payload: AlertSettings) {
 
 export function testAlertWebhook() {
   return fetchJson<AlertTestResult>('/api/v1/settings/alerts/test', { method: 'POST' })
+}
+
+export function getAlertEvents(limit = 50, acknowledged?: boolean) {
+  const params = new URLSearchParams({ limit: String(limit) })
+  if (acknowledged !== undefined) params.set('acknowledged', String(acknowledged))
+  return fetchJson<AlertEvent[]>(`/api/v1/settings/alerts/events?${params}`)
+}
+
+export function acknowledgeAlertEvent(eventId: number) {
+  return fetchJson<AlertEvent>(`/api/v1/settings/alerts/events/${eventId}/ack`, {
+    method: 'POST',
+  })
+}
+
+export function scanDiscovery(payload: {
+  targets: string[]
+  username?: string
+  password?: string
+  device_type_hint?: string
+}) {
+  return fetchJson<{ scanned: number; candidates: DiscoveryCandidate[] }>(
+    '/api/v1/discovery/scan',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    },
+  )
+}
+
+export function importDiscovery(payload: {
+  candidates: DiscoveryCandidate[]
+  enable_connectors?: boolean
+  import_credentials?: boolean
+  username?: string
+  password?: string
+}) {
+  return fetchJson<{ imported: number; skipped: number }>('/api/v1/discovery/import', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+}
+
+export function testDeviceCredentials(
+  deviceId: string,
+  payload?: { username?: string; password?: string },
+) {
+  return fetchJson<CredentialTestResult>(`/api/v1/devices/${deviceId}/credentials/test`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload ?? {}),
+  })
 }
 
 export function getMockScenario() {

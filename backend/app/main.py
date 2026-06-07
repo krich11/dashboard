@@ -10,7 +10,7 @@ from app.config import ROOT_DIR, get_settings
 from app.middleware.auth import AuthMiddleware
 from app.db.base import Base
 from app.db.session import SessionLocal, engine
-from app.routers import dashboards, devices, health, metrics, reachability, status, system, widgets
+from app.routers import dashboards, devices, discovery, health, metrics, reachability, status, system, widgets
 from app.routers import settings as settings_router
 from app.services.collector_service import collector_service
 from app.services.seed import seed_from_mocks
@@ -48,6 +48,7 @@ def create_app() -> FastAPI:
     app.include_router(status.router)
     app.include_router(reachability.router)
     app.include_router(devices.router)
+    app.include_router(discovery.router)
     app.include_router(dashboards.router)
     app.include_router(settings_router.router)
     app.include_router(widgets.router)

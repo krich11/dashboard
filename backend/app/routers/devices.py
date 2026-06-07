@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.collectors.helpers import ConnectorSkipped
 from app.db.session import get_db
+from app.schemas.discovery import CredentialTestRequest, CredentialTestResult
 from app.schemas.device import (
     BulkDeviceDelete,
     BulkDevicePoll,
@@ -18,6 +19,7 @@ from app.schemas.device import (
 )
 from app.services import status_history as status_history_service
 from app.services import devices as device_service
+from app.services import discovery_service
 
 router = APIRouter(prefix="/api/v1/devices", tags=["devices"])
 
@@ -130,6 +132,24 @@ def bulk_delete_devices(payload: BulkDeviceDelete, db: Session = Depends(get_db)
 @router.post("/bulk-poll", response_model=BulkPollResult)
 async def bulk_poll_devices(payload: BulkDevicePoll, db: Session = Depends(get_db)) -> BulkPollResult:
     return await device_service.bulk_poll_devices(db, payload.device_ids)
+
+
+@router.post("/{device_id}/credentials/test", response_model=CredentialTestResult)
+async def test_device_credentials(
+    device_id: str,
+    payload: CredentialTestRequest | None = None,
+    db: Session = Depends(get_db),
+) -> CredentialTestResult:
+    body = payload or CredentialTestRequest()
+    try:
+        return await discovery_service.test_device_credentials(
+            db,
+            device_id,
+            username=body.username,
+            password=body.password,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 @router.post("/{device_id}/poll", response_model=DeviceStatusRead)

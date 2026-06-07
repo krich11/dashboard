@@ -74,6 +74,35 @@ export interface AlertSettings {
   min_interval_sec: number
   format: 'json' | 'slack' | 'pagerduty'
   pagerduty_routing_key: string
+  threshold_important_down: number
+  threshold_internet_degraded: boolean
+}
+
+export interface AlertEvent {
+  id: number
+  event_type: string
+  severity: string
+  message: string
+  payload: Record<string, unknown>
+  acknowledged: boolean
+  created_at: string
+}
+
+export interface DiscoveryCandidate {
+  target: string
+  reachable: boolean
+  detected_type: string | null
+  suggested_name: string | null
+  suggested_hostname: string | null
+  credentials_ok: boolean | null
+  message: string
+}
+
+export interface CredentialTestResult {
+  ok: boolean
+  message: string
+  device_type: string
+  overall: string | null
 }
 
 export interface CollectorRunResult {

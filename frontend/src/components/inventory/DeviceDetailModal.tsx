@@ -1,7 +1,13 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { deleteDevice, getDeviceStatusHistory, pollDevice, updateDevice } from '../../api/client'
+import {
+  deleteDevice,
+  getDeviceStatusHistory,
+  pollDevice,
+  testDeviceCredentials,
+  updateDevice,
+} from '../../api/client'
 import type { DeviceUpdate, DeviceWithStatus } from '../../types/api'
 
 const DEVICE_TYPES = ['hpe_ilorest', 'juniper', 'aruba', 'linux_ssh']
@@ -74,6 +80,22 @@ export function DeviceDetailModal({ device, onClose }: Props) {
   const history = useQuery({
     queryKey: ['device-status-history', device.id],
     queryFn: () => getDeviceStatusHistory(device.id, 24),
+  })
+
+  const testCreds = useMutation({
+    mutationFn: () =>
+      testDeviceCredentials(device.id, {
+        username: username || undefined,
+        password: password || undefined,
+      }),
+    onSuccess: (result) =>
+      setPollMessage(
+        result.ok
+          ? `Credentials OK: ${result.message}`
+          : `Credential test failed: ${result.message}`,
+      ),
+    onError: (err) =>
+      setPollMessage(err instanceof Error ? err.message : 'Credential test failed'),
   })
 
   const poll = useMutation({
@@ -259,6 +281,14 @@ export function DeviceDetailModal({ device, onClose }: Props) {
                 </button>
               </>
             )}
+            <button
+              type="button"
+              className="inline-btn"
+              onClick={() => testCreds.mutate()}
+              disabled={testCreds.isPending}
+            >
+              {testCreds.isPending ? 'Testing…' : 'Test credentials'}
+            </button>
             <button
               type="button"
               className="inline-btn"

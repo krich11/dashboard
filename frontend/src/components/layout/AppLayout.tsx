@@ -7,6 +7,7 @@ import { SystemStatusBadge } from './SystemStatusBadge'
 const navItems = [
   { to: '/', label: 'Overview' },
   { to: '/inventory', label: 'Inventory' },
+  { to: '/discovery', label: 'Discovery' },
   { to: '/dashboards', label: 'Dashboards' },
   { to: '/settings', label: 'Settings' },
   { to: '/help', label: 'Help' },

@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { AppLayout } from './components/layout/AppLayout'
 import { DashboardsPage } from './pages/DashboardsPage'
+import { DiscoveryPage } from './pages/DiscoveryPage'
 import { HelpPage } from './pages/HelpPage'
 import { InventoryPage } from './pages/InventoryPage'
 import { OverviewPage } from './pages/OverviewPage'
@@ -22,6 +23,7 @@ function App() {
           <Route element={<AppLayout />}>
             <Route index element={<OverviewPage />} />
             <Route path="inventory" element={<InventoryPage />} />
+            <Route path="discovery" element={<DiscoveryPage />} />
             <Route path="dashboards" element={<DashboardsPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="help" element={<HelpPage />} />

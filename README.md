@@ -2,7 +2,7 @@
 
 Native-Linux datacenter status dashboard for ~67 devices with modular JSON-driven widgets.
 
-**v1.5** — Device status history tiers (configurable in Settings), 9 widgets, ops scripts. Tags: `v1.0.0` … `v1.5.2`.
+**v1.6** — Discovery scan/import, credential test, threshold alerts + alert log. Tags: `v1.0.0` … `v1.6.0`.
 
 ## Quick start (development)
 
@@ -88,6 +88,8 @@ pip install -r /opt/dashboard/backend/requirements.txt
 Set `MOCK_MODE=false`, a strong `DASHBOARD_SECRET_KEY`, and production `DATABASE_URL` in `/opt/dashboard/.env`.
 
 Enable polling per device by setting `connector_enabled=true` and storing encrypted credentials via the device API. Supported types: `hpe_ilorest` (Redfish/httpx), `juniper` (junos-eznc), `aruba` (REST or ping), `linux_ssh` (paramiko or ping fallback).
+
+**Discovery** (`/discovery`): scan IPs or CIDR ranges, auto-detect connector type, test credentials, import to inventory. **Credential test**: per-device in Inventory detail or `POST /api/v1/devices/{id}/credentials/test`.
 
 When `frontend/dist` exists, the API serves the built SPA on the same port (no separate nginx required for small deployments).
 

@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 
 from app.config import get_settings
+from app.schemas.alerts import AlertEventRead
 from app.schemas.settings import (
     AlertSettings,
     AlertTestResult,
@@ -18,7 +19,13 @@ from app.schemas.settings import (
     ReachabilitySettings,
 )
 from app.services import reachability as reachability_service
-from app.services.alert_service import get_alert_settings, send_test_alert, update_alert_settings
+from app.services.alert_service import (
+    acknowledge_alert_event,
+    get_alert_settings,
+    list_alert_events,
+    send_test_alert,
+    update_alert_settings,
+)
 from app.services import settings_service
 from app.services.collector_service import collector_service
 from app.services.mock_scenario import VALID_SCENARIOS, get_active_mock_scenario, set_mock_scenario
@@ -109,6 +116,23 @@ def write_alert_settings(payload: AlertSettings, db: Session = Depends(get_db)) 
 @router.post("/alerts/test", response_model=AlertTestResult)
 async def test_alert_webhook(db: Session = Depends(get_db)) -> AlertTestResult:
     return await send_test_alert(db)
+
+
+@router.get("/alerts/events", response_model=list[AlertEventRead])
+def read_alert_events(
+    limit: int = 50,
+    acknowledged: bool | None = None,
+    db: Session = Depends(get_db),
+) -> list[AlertEventRead]:
+    return list_alert_events(db, limit=limit, acknowledged=acknowledged)
+
+
+@router.post("/alerts/events/{event_id}/ack", response_model=AlertEventRead)
+def ack_alert_event(event_id: int, db: Session = Depends(get_db)) -> AlertEventRead:
+    event = acknowledge_alert_event(db, event_id)
+    if event is None:
+        raise HTTPException(status_code=404, detail="Alert event not found")
+    return event
 
 
 @router.get("/encryption", response_model=EncryptionStatus)

@@ -1,7 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import {
+  getAlertEvents,
   getAlertSettings,
+  acknowledgeAlertEvent,
   getCollectorSettings,
   getCollectorStatus,
   getHistorySettings,
@@ -88,6 +90,11 @@ export function SettingsPage() {
   const [collectorMessage, setCollectorMessage] = useState<string | null>(null)
   const [historyMessage, setHistoryMessage] = useState<string | null>(null)
   const alerts = useQuery({ queryKey: ['settings-alerts'], queryFn: getAlertSettings })
+  const alertEvents = useQuery({
+    queryKey: ['alert-events'],
+    queryFn: () => getAlertEvents(30),
+    refetchInterval: 30_000,
+  })
   const [alertsForm, setAlertsForm] = useState<AlertSettings | null>(null)
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
 
@@ -468,7 +475,8 @@ export function SettingsPage() {
           <article className="card settings-card">
             <h3>Webhook Alerts</h3>
             <p className="settings-hint">
-              POST JSON to your webhook when the operational banner changes (Slack, PagerDuty, custom).
+              Banner-change webhooks (G0) plus optional threshold rules (G2). Events are logged below
+              for review and ack (G3). No email — webhooks only.
             </p>
             <form
               className="settings-form"
@@ -524,6 +532,34 @@ export function SettingsPage() {
                 </label>
               )}
               <label>
+                Threshold: important devices down (0=off)
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={alertsForm.threshold_important_down ?? 0}
+                  onChange={(e) =>
+                    setAlertsForm({
+                      ...alertsForm,
+                      threshold_important_down: Number(e.target.value),
+                    })
+                  }
+                />
+              </label>
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={alertsForm.threshold_internet_degraded ?? false}
+                  onChange={(e) =>
+                    setAlertsForm({
+                      ...alertsForm,
+                      threshold_internet_degraded: e.target.checked,
+                    })
+                  }
+                />
+                Alert when internet reachability is degraded
+              </label>
+              <label>
                 Min interval (sec)
                 <input
                   type="number"
@@ -552,6 +588,44 @@ export function SettingsPage() {
             </form>
           </article>
         )}
+
+        <article className="card settings-card">
+          <h3>Alert log</h3>
+          <p className="settings-hint">Recent banner and threshold events. Ack to mark reviewed.</p>
+          {alertEvents.isLoading && <p className="widget-muted">Loading events…</p>}
+          {alertEvents.data && alertEvents.data.length === 0 && (
+            <p className="widget-muted">No alert events yet.</p>
+          )}
+          {alertEvents.data && alertEvents.data.length > 0 && (
+            <ul className="history-list">
+              {alertEvents.data.map((event) => (
+                <li key={event.id}>
+                  <span className={`status-pill status-${event.severity === 'critical' ? 'critical' : 'warning'}`}>
+                    {event.event_type}
+                  </span>
+                  <span>{event.message}</span>
+                  <span className="widget-muted">
+                    {new Date(event.created_at).toLocaleString()}
+                    {event.acknowledged ? ' · acked' : ''}
+                  </span>
+                  {!event.acknowledged && (
+                    <button
+                      type="button"
+                      className="inline-btn"
+                      onClick={() =>
+                        acknowledgeAlertEvent(event.id).then(() =>
+                          queryClient.invalidateQueries({ queryKey: ['alert-events'] }),
+                        )
+                      }
+                    >
+                      Ack
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </article>
 
         {health.data?.mock_mode && mockScenario.data && (
           <article className="card settings-card">

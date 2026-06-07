@@ -6,7 +6,7 @@ from app.schemas.device import IssueItem, OperationalHistoryPoint
 from app.services import status_history as status_history_service
 from app.schemas.status import HighLevelSummary
 from app.services.aggregation import compute_high_level_summary
-from app.services.alert_service import maybe_send_banner_alert
+from app.services.alert_service import evaluate_threshold_alerts, maybe_send_banner_alert
 from app.services import devices as device_service
 
 router = APIRouter(prefix="/api/v1/status", tags=["status"])
@@ -16,6 +16,7 @@ router = APIRouter(prefix="/api/v1/status", tags=["status"])
 async def read_high_level_status(db: Session = Depends(get_db)) -> HighLevelSummary:
     summary = compute_high_level_summary(db)
     await maybe_send_banner_alert(db, summary)
+    await evaluate_threshold_alerts(db, summary)
     return summary
 
 
