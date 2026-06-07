@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { RefreshControl } from './RefreshControl'
+import { SystemStatusBadge } from './SystemStatusBadge'
 
 const navItems = [
   { to: '/', label: 'Overview' },
@@ -18,6 +19,7 @@ export function AppLayout() {
           <h1>Operations Console</h1>
         </div>
         <div className="header-actions">
+          <SystemStatusBadge />
           <RefreshControl />
           <nav className="app-nav">
             {navItems.map((item) => (

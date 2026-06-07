@@ -38,6 +38,7 @@ class DeviceUpdate(BaseModel):
     connector_enabled: bool | None = None
     username: str | None = None
     password: str | None = None
+    clear_credentials: bool = False
 
 
 class DeviceRead(BaseModel):

@@ -37,6 +37,7 @@ python3 -m pip install --user --break-system-packages -r backend/requirements.tx
 ```bash
 cd backend && TESTING=true PYTHONPATH=. python3 -m pytest -q
 cd frontend && npm run test && npm run build
+make ci           # full local CI (pytest + vitest + build)
 make smoke-test   # requires running API on :8000
 ```
 
@@ -112,6 +113,8 @@ location /health {
 Back up the SQLite database regularly:
 
 ```bash
+make backup
+# or
 sqlite3 /opt/dashboard/data/dashboard.db ".backup '/var/backups/dashboard-$(date +%F).db'"
 ```
 

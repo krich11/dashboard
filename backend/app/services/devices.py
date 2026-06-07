@@ -114,9 +114,12 @@ def update_device(db: Session, device_id: str, payload: DeviceUpdate) -> DeviceR
     data = payload.model_dump(exclude_unset=True)
     username = data.pop("username", None)
     password = data.pop("password", None)
+    clear_credentials = data.pop("clear_credentials", False)
     for key, value in data.items():
         setattr(device, key, value)
-    if username is not None or password is not None:
+    if clear_credentials:
+        device.credentials_encrypted = None
+    elif username is not None or password is not None:
         existing_user, existing_pass = decrypt_credentials(device.credentials_encrypted)
         device.credentials_encrypted = encrypt_credentials(
             username if username is not None else existing_user,

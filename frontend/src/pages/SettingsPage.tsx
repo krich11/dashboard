@@ -4,9 +4,12 @@ import {
   getCollectorSettings,
   getCollectorStatus,
   getEncryptionStatus,
+  getHealth,
+  getMockScenario,
   getReachabilitySettings,
   testEncryption,
   updateCollectorSettings,
+  updateMockScenario,
   updateReachabilitySettings,
 } from '../api/client'
 import type { CollectorSettings, ReachabilitySettings } from '../types/api'
@@ -59,6 +62,12 @@ export function SettingsPage() {
     queryFn: getReachabilitySettings,
   })
   const encryption = useQuery({ queryKey: ['settings-encryption'], queryFn: getEncryptionStatus })
+  const health = useQuery({ queryKey: ['health'], queryFn: getHealth })
+  const mockScenario = useQuery({
+    queryKey: ['mock-scenario'],
+    queryFn: getMockScenario,
+    enabled: health.data?.mock_mode === true,
+  })
 
   const [collectorForm, setCollectorForm] = useState<CollectorSettings | null>(null)
   const [reachabilityForm, setReachabilityForm] = useState<ReachabilitySettings | null>(null)
@@ -80,6 +89,17 @@ export function SettingsPage() {
   const saveReachability = useMutation({
     mutationFn: updateReachabilitySettings,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['settings-reachability'] }),
+  })
+
+  const switchScenario = useMutation({
+    mutationFn: updateMockScenario,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mock-scenario'] })
+      queryClient.invalidateQueries({ queryKey: ['health'] })
+      queryClient.invalidateQueries({ queryKey: ['high-level'] })
+      queryClient.invalidateQueries({ queryKey: ['reachability'] })
+      queryClient.invalidateQueries({ queryKey: ['devices-with-status'] })
+    },
   })
 
   const runEncryptionTest = useMutation({
@@ -320,6 +340,27 @@ export function SettingsPage() {
             </form>
           )}
         </article>
+
+        {health.data?.mock_mode && mockScenario.data && (
+          <article className="card settings-card">
+            <h3>Mock Scenario</h3>
+            <p className="settings-hint">Switch simulated failure modes for demos and testing.</p>
+            <label>
+              Active scenario
+              <select
+                value={mockScenario.data.scenario}
+                onChange={(e) => switchScenario.mutate(e.target.value)}
+                disabled={switchScenario.isPending}
+              >
+                {mockScenario.data.available.map((scenario) => (
+                  <option key={scenario} value={scenario}>
+                    {scenario.replaceAll('_', ' ')}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </article>
+        )}
 
         <article className="card settings-card">
           <h3>Encryption Key</h3>

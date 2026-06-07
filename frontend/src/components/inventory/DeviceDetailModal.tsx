@@ -173,6 +173,20 @@ export function DeviceDetailModal({ device, onClose }: Props) {
                 autoComplete="new-password"
               />
             </label>
+            {device.credentials_configured && (
+              <button
+                type="button"
+                className="inline-btn danger"
+                onClick={() => {
+                  updateDevice(device.id, { clear_credentials: true }).then(() => {
+                    queryClient.invalidateQueries({ queryKey: ['devices-with-status'] })
+                    setPollMessage('Credentials cleared.')
+                  })
+                }}
+              >
+                Clear stored credentials
+              </button>
+            )}
           </fieldset>
 
           {device.status && (

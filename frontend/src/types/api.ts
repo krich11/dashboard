@@ -87,6 +87,7 @@ export interface DeviceUpdate {
   connector_enabled?: boolean
   username?: string
   password?: string
+  clear_credentials?: boolean
 }
 
 export interface DeviceWithStatus extends Device {

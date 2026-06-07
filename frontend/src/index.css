@@ -709,3 +709,24 @@ a {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
+
+.system-badge {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid #2a3a5c;
+}
+
+.system-badge.mock {
+  color: #f2cc60;
+  border-color: #6b5a2e;
+  background: rgba(107, 90, 46, 0.25);
+}
+
+.system-badge.production {
+  color: #3dd68c;
+  border-color: #2f8f62;
+  background: rgba(47, 143, 98, 0.2);
+}

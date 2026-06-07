@@ -19,6 +19,11 @@ import type {
   WidgetInstance,
 } from '../types/api'
 
+export interface MockScenarioSettings {
+  scenario: string
+  available: string[]
+}
+
 const API_BASE = ''
 
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
@@ -213,6 +218,18 @@ export function getCollectorSettings() {
 
 export function getCollectorStatus() {
   return fetchJson<CollectorStatus>('/api/v1/settings/collector/status')
+}
+
+export function getMockScenario() {
+  return fetchJson<MockScenarioSettings>('/api/v1/settings/mock-scenario')
+}
+
+export function updateMockScenario(scenario: string) {
+  return fetchJson<MockScenarioSettings>('/api/v1/settings/mock-scenario', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ scenario }),
+  })
 }
 
 export function updateCollectorSettings(payload: CollectorSettings) {

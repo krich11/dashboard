@@ -9,6 +9,8 @@ import {
 } from '../api/client'
 import { AddDeviceModal } from '../components/inventory/AddDeviceModal'
 import { DeviceDetailModal } from '../components/inventory/DeviceDetailModal'
+import { useQuery } from '@tanstack/react-query'
+import { getDevices } from '../api/client'
 import { useDevicesWithStatus } from '../hooks/useDashboardData'
 import type { DeviceWithStatus } from '../types/api'
 
@@ -38,6 +40,7 @@ export function InventoryPage() {
   )
 
   const devices = useDevicesWithStatus(filters)
+  const allDevices = useQuery({ queryKey: ['devices-total'], queryFn: () => getDevices() })
   const queryClient = useQueryClient()
 
   const toggleImportant = useMutation({
@@ -120,7 +123,10 @@ export function InventoryPage() {
       <div className="page-header inventory-header">
         <div>
           <h2>Inventory</h2>
-          <p>{devices.data?.length ?? 0} devices shown (of 67 total)</p>
+          <p>
+            {devices.data?.length ?? 0} devices shown
+            {allDevices.data ? ` (of ${allDevices.data.length} total)` : ''}
+          </p>
         </div>
         <div className="dashboard-actions">
           <button type="button" className="inline-btn primary" onClick={() => setShowAdd(true)}>

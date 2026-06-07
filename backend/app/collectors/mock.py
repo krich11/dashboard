@@ -4,10 +4,10 @@ import random
 from sqlalchemy.orm import Session
 
 from app.collectors.base import DeviceConnector
-from app.config import get_settings
 from app.models.device import Device
 from app.schemas.device import DeviceStatusRead
 from app.services.mock_data import get_device_statuses
+from app.services.mock_scenario import get_active_mock_scenario
 
 
 class MockConnector(DeviceConnector):
@@ -16,12 +16,15 @@ class MockConnector(DeviceConnector):
     def __init__(self, db: Session) -> None:
         self.db = db
         self._status_cache: dict[str, DeviceStatusRead] = {}
+        self._cached_scenario: str | None = None
 
     def _load_cache(self) -> None:
-        if self._status_cache:
+        scenario = get_active_mock_scenario(self.db)
+        if self._status_cache and self._cached_scenario == scenario:
             return
-        settings = get_settings()
-        for status in get_device_statuses(settings.mock_scenario):
+        self._status_cache = {}
+        self._cached_scenario = scenario
+        for status in get_device_statuses(scenario):
             self._status_cache[status.device_id] = status
 
     async def poll(self, device_id: str) -> DeviceStatusRead:

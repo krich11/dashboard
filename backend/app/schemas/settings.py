@@ -41,6 +41,11 @@ class EncryptionTestResult(BaseModel):
     message: str
 
 
+class MockScenarioSettings(BaseModel):
+    scenario: str
+    available: list[str] = Field(default_factory=list)
+
+
 class CollectorStatus(BaseModel):
     running: bool
     mock_mode: bool

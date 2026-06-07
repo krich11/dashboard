@@ -50,12 +50,23 @@ async def _http_target(url: str, _family: str, timeout_sec: int) -> tuple[bool, 
         return False, None, str(exc)
 
 
-async def _mock_target(_target: str, family: str, _timeout_sec: int) -> tuple[bool, int | None, str | None]:
-    settings = get_settings()
-    if settings.mock_scenario == "internet_degraded":
+def _resolve_mock_scenario(db: Session | None) -> str:
+    if db is not None:
+        from app.services.mock_scenario import get_active_mock_scenario
+
+        return get_active_mock_scenario(db)
+    return get_settings().mock_scenario
+
+
+async def _mock_target(
+    _target: str, family: str, _timeout_sec: int, scenario: str
+) -> tuple[bool, int | None, str | None]:
+    if scenario == "internet_degraded":
         return family == "ipv4", 10, None if family == "ipv4" else "mock degraded"
-    if settings.mock_scenario == "mixed":
+    if scenario == "mixed":
         return family == "ipv4", 12, None if family == "ipv4" else "mock degraded"
+    if scenario == "devices_down":
+        return True, 10, None
     return True, 10, None
 
 
@@ -82,7 +93,14 @@ class ExternalReachabilityMonitor:
         if self._check_fn:
             return self._check_fn
         if get_settings().mock_mode:
-            return _mock_target
+            scenario = _resolve_mock_scenario(self.db)
+
+            async def mock_check(
+                target: str, family: str, timeout_sec: int
+            ) -> tuple[bool, int | None, str | None]:
+                return await _mock_target(target, family, timeout_sec, scenario)
+
+            return mock_check
         if settings.method == "http":
             return _http_target
         return _ping_target
