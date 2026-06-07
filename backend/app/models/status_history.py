@@ -8,7 +8,10 @@ from app.db.base import Base
 
 class DeviceStatusHistory(Base):
     __tablename__ = "device_status_history"
-    __table_args__ = (Index("ix_device_status_history_device_ts", "device_id", "timestamp"),)
+    __table_args__ = (
+        Index("ix_device_status_history_device_ts", "device_id", "timestamp"),
+        Index("ix_device_status_history_device_gran_ts", "device_id", "granularity", "timestamp"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     device_id: Mapped[str] = mapped_column(
@@ -20,3 +23,4 @@ class DeviceStatusHistory(Base):
     details: Mapped[dict] = mapped_column(JSON, default=dict)
     timestamp: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     source: Mapped[str] = mapped_column(String(32), default="collector")
+    granularity: Mapped[str] = mapped_column(String(16), default="raw")

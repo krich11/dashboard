@@ -198,6 +198,7 @@ export interface DeviceStatusHistoryPoint {
   message: string
   timestamp: string
   source: string
+  granularity: string
 }
 
 export interface OperationalHistoryPoint {

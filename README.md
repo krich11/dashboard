@@ -2,7 +2,7 @@
 
 Native-Linux datacenter status dashboard for ~67 devices with modular JSON-driven widgets.
 
-**v1.5** — Device status history, 3 new widgets, ops scripts, auth-ready middleware. Tags: `v1.0.0` … `v1.5.0`.
+**v1.5** — Device status history (raw → hourly @ 30d → daily @ 90d, daily kept forever), 9 widgets, ops scripts. Tags: `v1.0.0` … `v1.5.1`.
 
 ## Quick start (development)
 

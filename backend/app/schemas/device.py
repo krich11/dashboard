@@ -107,6 +107,7 @@ class DeviceStatusHistoryPoint(BaseModel):
     message: str
     timestamp: datetime
     source: str
+    granularity: str = "raw"
 
 
 class OperationalHistoryPoint(BaseModel):

@@ -50,6 +50,12 @@ export function SystemInfo({ config }: Props) {
             <dt>Devices</dt>
             <dd>{data.total_devices}</dd>
           </div>
+          <div>
+            <dt>History tiers</dt>
+            <dd>
+              raw {data.history_raw_days}d → hourly {data.history_hourly_days}d → daily ∞
+            </dd>
+          </div>
         </dl>
       )}
     </article>

@@ -220,6 +220,8 @@ export interface SystemInfo {
   mock_scenario: string | null
   collector_running: boolean
   total_devices: number
+  history_raw_days: number
+  history_hourly_days: number
   docs_url: string
   openapi_url: string
 }

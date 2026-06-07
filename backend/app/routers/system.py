@@ -8,7 +8,7 @@ from app.services.mock_scenario import get_active_mock_scenario
 
 router = APIRouter(prefix="/api/v1/system", tags=["system"])
 
-APP_VERSION = "1.5.0"
+APP_VERSION = "1.5.1"
 
 
 @router.get("/info")
@@ -22,6 +22,8 @@ def system_info(db: Session = Depends(get_db)) -> dict:
         "mock_scenario": get_active_mock_scenario(db) if settings.mock_mode else None,
         "collector_running": collector["running"],
         "total_devices": collector["total_devices"],
+        "history_raw_days": settings.status_history_raw_days,
+        "history_hourly_days": settings.status_history_hourly_days,
         "docs_url": "/docs",
         "openapi_url": "/openapi.json",
     }

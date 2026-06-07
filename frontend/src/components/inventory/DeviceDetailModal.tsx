@@ -219,7 +219,8 @@ export function DeviceDetailModal({ device, onClose }: Props) {
                     <span className={`status-pill status-${point.overall}`}>{point.overall}</span>
                     <span>{point.message}</span>
                     <span className="widget-muted">
-                      {new Date(point.timestamp).toLocaleString()} · {point.source}
+                      {new Date(point.timestamp).toLocaleString()} · {point.granularity} ·{' '}
+                      {point.source}
                     </span>
                   </li>
                 ))}
