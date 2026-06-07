@@ -725,6 +725,42 @@ a {
   background: rgba(107, 90, 46, 0.25);
 }
 
+.operational-banner {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #2a3a5c;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+.operational-banner.banner-all_clear {
+  border-color: #2f8f62;
+  background: rgba(47, 143, 98, 0.15);
+}
+
+.operational-banner.banner-devices_down,
+.operational-banner.banner-mixed {
+  border-color: #9a4c4c;
+  background: rgba(154, 76, 76, 0.2);
+  color: #ff7b72;
+}
+
+.operational-banner.banner-internet_degraded {
+  border-color: #6b5a2e;
+  background: rgba(107, 90, 46, 0.2);
+  color: #f2cc60;
+}
+
+.operational-banner-meta {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #9db0d3;
+}
+
 .system-badge.production {
   color: #3dd68c;
   border-color: #2f8f62;

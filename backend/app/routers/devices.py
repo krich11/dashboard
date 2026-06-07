@@ -6,7 +6,9 @@ from app.collectors.helpers import ConnectorSkipped
 from app.db.session import get_db
 from app.schemas.device import (
     BulkDeviceDelete,
+    BulkDevicePoll,
     BulkDeviceUpdate,
+    BulkPollResult,
     DeviceCreate,
     DeviceRead,
     DeviceStatusRead,
@@ -107,6 +109,11 @@ def bulk_update_devices(payload: BulkDeviceUpdate, db: Session = Depends(get_db)
 def bulk_delete_devices(payload: BulkDeviceDelete, db: Session = Depends(get_db)) -> dict:
     deleted = device_service.bulk_delete_devices(db, payload)
     return {"deleted": deleted}
+
+
+@router.post("/bulk-poll", response_model=BulkPollResult)
+async def bulk_poll_devices(payload: BulkDevicePoll, db: Session = Depends(get_db)) -> BulkPollResult:
+    return await device_service.bulk_poll_devices(db, payload.device_ids)
 
 
 @router.post("/{device_id}/poll", response_model=DeviceStatusRead)

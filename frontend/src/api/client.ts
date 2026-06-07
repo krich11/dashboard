@@ -89,6 +89,14 @@ export function bulkDeleteDevices(deviceIds: string[]) {
   })
 }
 
+export function bulkPollDevices(deviceIds: string[]) {
+  return fetchJson<{ polled: number; results: DeviceStatus[] }>('/api/v1/devices/bulk-poll', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ device_ids: deviceIds }),
+  })
+}
+
 export function deleteDevice(deviceId: string) {
   return fetch(`${API_BASE}/api/v1/devices/${deviceId}`, { method: 'DELETE' }).then((response) => {
     if (!response.ok) {
@@ -201,6 +209,21 @@ export function getIssues(importantOnly = false) {
 
 export function getHealth() {
   return fetchJson<{ status: string; mock_mode: boolean; mock_scenario: string }>('/health')
+}
+
+export interface SystemInfo {
+  app: string
+  version: string
+  mock_mode: boolean
+  mock_scenario: string | null
+  collector_running: boolean
+  total_devices: number
+  docs_url: string
+  openapi_url: string
+}
+
+export function getSystemInfo() {
+  return fetchJson<SystemInfo>('/api/v1/system/info')
 }
 
 export function getReachabilitySettings() {

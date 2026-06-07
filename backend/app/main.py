@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from app.config import ROOT_DIR, get_settings
 from app.db.base import Base
 from app.db.session import SessionLocal, engine
-from app.routers import dashboards, devices, health, metrics, reachability, status, widgets
+from app.routers import dashboards, devices, health, metrics, reachability, status, system, widgets
 from app.routers import settings as settings_router
 from app.services.collector_service import collector_service
 from app.services.seed import seed_from_mocks
@@ -49,6 +49,7 @@ def create_app() -> FastAPI:
     app.include_router(dashboards.router)
     app.include_router(settings_router.router)
     app.include_router(widgets.router)
+    app.include_router(system.router)
 
     static_dir = settings.frontend_static_dir
     if static_dir is None:

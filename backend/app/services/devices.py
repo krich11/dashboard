@@ -8,6 +8,7 @@ from app.models.device import Device, LatestStatus
 from app.schemas.device import (
     BulkDeviceDelete,
     BulkDeviceUpdate,
+    BulkPollResult,
     DeviceCreate,
     DeviceRead,
     DeviceStatusRead,
@@ -16,6 +17,7 @@ from app.schemas.device import (
     IssueItem,
 )
 from app.collectors.factory import get_connector
+from app.collectors.helpers import ConnectorSkipped
 from app.services.crypto import decrypt_credentials, encrypt_credentials
 
 
@@ -128,6 +130,16 @@ def update_device(db: Session, device_id: str, payload: DeviceUpdate) -> DeviceR
     db.commit()
     db.refresh(device)
     return to_device_read(device)
+
+
+async def bulk_poll_devices(db: Session, device_ids: list[str]) -> BulkPollResult:
+    results: list[DeviceStatusRead] = []
+    for device_id in device_ids:
+        try:
+            results.append(await poll_device_now(db, device_id))
+        except (ValueError, ConnectorSkipped):
+            continue
+    return BulkPollResult(polled=len(results), results=results)
 
 
 async def poll_device_now(db: Session, device_id: str) -> DeviceStatusRead:

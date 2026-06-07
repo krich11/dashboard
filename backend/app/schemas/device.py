@@ -28,6 +28,10 @@ class BulkDeviceDelete(BaseModel):
     device_ids: list[str]
 
 
+class BulkDevicePoll(BaseModel):
+    device_ids: list[str]
+
+
 class DeviceUpdate(BaseModel):
     name: str | None = None
     hostname: str | None = None
@@ -76,6 +80,11 @@ class DeviceStatusRead(BaseModel):
     metrics: dict
     details: dict
     timestamp: datetime
+
+
+class BulkPollResult(BaseModel):
+    polled: int
+    results: list[DeviceStatusRead]
 
 
 class DeviceWithStatus(DeviceRead):

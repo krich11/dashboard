@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useRef, useState } from 'react'
 import {
   bulkDeleteDevices,
+  bulkPollDevices,
   bulkUpdateDevices,
   downloadDevicesExport,
   importDevicesCsv,
@@ -72,6 +73,17 @@ export function InventoryPage() {
     },
     onError: (err) =>
       setBulkMessage(err instanceof Error ? err.message : 'Bulk update failed'),
+  })
+
+  const bulkPoll = useMutation({
+    mutationFn: bulkPollDevices,
+    onSuccess: (result) => {
+      setBulkMessage(`Polled ${result.polled} device(s).`)
+      queryClient.invalidateQueries({ queryKey: ['devices-with-status'] })
+      queryClient.invalidateQueries({ queryKey: ['high-level'] })
+    },
+    onError: (err) =>
+      setBulkMessage(err instanceof Error ? err.message : 'Bulk poll failed'),
   })
 
   const bulkDelete = useMutation({
@@ -206,6 +218,14 @@ export function InventoryPage() {
             disabled={bulkUpdate.isPending}
           >
             Mark important
+          </button>
+          <button
+            type="button"
+            className="inline-btn"
+            onClick={() => bulkPoll.mutate([...checkedIds])}
+            disabled={bulkPoll.isPending}
+          >
+            {bulkPoll.isPending ? 'Polling…' : 'Poll selected'}
           </button>
           <button
             type="button"

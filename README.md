@@ -2,7 +2,7 @@
 
 Native-Linux datacenter status dashboard for ~67 devices with modular JSON-driven widgets.
 
-**v1.3** — PagerDuty alerts, manual collector run, scheduled backups. Tags: `v1.0.0` … `v1.3.0`.
+**v1.4** — Bulk device poll, system info API, operational banner, error boundary. Tags: `v1.0.0` … `v1.4.0`.
 
 ## Quick start (development)
 

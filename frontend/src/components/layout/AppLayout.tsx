@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { OperationalBanner } from './OperationalBanner'
 import { RefreshControl } from './RefreshControl'
 import { SystemStatusBadge } from './SystemStatusBadge'
 
@@ -50,6 +51,7 @@ export function AppLayout() {
           </nav>
         </div>
       </header>
+      <OperationalBanner />
       <main className="app-main">
         <Outlet />
       </main>
