@@ -99,3 +99,19 @@ class IssueItem(BaseModel):
     message: str
     important_flag: bool
     timestamp: datetime
+
+
+class DeviceStatusHistoryPoint(BaseModel):
+    device_id: str
+    overall: str
+    message: str
+    timestamp: datetime
+    source: str
+
+
+class OperationalHistoryPoint(BaseModel):
+    timestamp: datetime
+    important_total: int
+    important_up: int
+    important_down: int
+    worst_overall: str

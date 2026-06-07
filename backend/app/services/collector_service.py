@@ -13,7 +13,9 @@ from app.collectors.helpers import ConnectorSkipped
 from app.config import get_settings
 from app.db.session import SessionLocal
 from app.models.device import Device, LatestStatus
+from app.schemas.device import DeviceStatusRead
 from app.services.settings_service import get_collector_settings
+from app.services.status_history import prune_status_history, record_device_status
 
 
 @dataclass
@@ -41,6 +43,7 @@ class CollectorService:
             "interval",
             seconds=settings.reachability_interval_sec,
         )
+        self.scheduler.add_job(self._prune_history_job, "interval", hours=1)
         self.scheduler.start()
         self._running = True
 
@@ -64,6 +67,13 @@ class CollectorService:
             "circuits_open": circuits_open,
             "devices_in_backoff": devices_in_backoff,
         }
+
+    async def _prune_history_job(self) -> None:
+        db = SessionLocal()
+        try:
+            prune_status_history(db)
+        finally:
+            db.close()
 
     async def _reachability_job(self) -> None:
         db = SessionLocal()
@@ -120,6 +130,7 @@ class CollectorService:
                             timestamp=status.timestamp.replace(tzinfo=None),
                         )
                     )
+                record_device_status(db, status, source="collector")
                 state.failures = 0
                 state.circuit_open = False
                 state.next_poll_at = datetime.now(UTC) + timedelta(
@@ -138,9 +149,22 @@ class CollectorService:
                     state.circuit_open = True
                 existing = db.query(LatestStatus).filter(LatestStatus.device_id == device.id).first()
                 if existing:
+                    ts = datetime.now(UTC).replace(tzinfo=None)
                     existing.overall = "unknown"
                     existing.message = f"Collector error: {exc}"
-                    existing.timestamp = datetime.now(UTC).replace(tzinfo=None)
+                    existing.timestamp = ts
+                    record_device_status(
+                        db,
+                        DeviceStatusRead(
+                            device_id=device.id,
+                            overall="unknown",
+                            message=f"Collector error: {exc}",
+                            metrics=existing.metrics or {},
+                            details=existing.details or {},
+                            timestamp=ts,
+                        ),
+                        source="collector",
+                    )
 
     async def run_once(self) -> dict:
         settings = get_settings()

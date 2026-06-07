@@ -1,10 +1,37 @@
+import { useQuery } from '@tanstack/react-query'
+import { getCollectorStatus, getSystemInfo } from '../api/client'
+
 export function HelpPage() {
+  const system = useQuery({ queryKey: ['system-info'], queryFn: getSystemInfo })
+  const collector = useQuery({ queryKey: ['collector-status'], queryFn: getCollectorStatus })
+
   return (
     <section className="page">
       <div className="page-header">
         <h2>Help</h2>
         <p>Quick reference for operators and LLM-assisted dashboard authoring.</p>
       </div>
+
+      <article className="card about-panel">
+        <h3>About this instance</h3>
+        {system.data ? (
+          <dl className="collector-stats">
+            <div><dt>Version</dt><dd>{system.data.version}</dd></div>
+            <div><dt>Mode</dt><dd>{system.data.mock_mode ? `mock (${system.data.mock_scenario})` : 'production'}</dd></div>
+            <div><dt>Devices</dt><dd>{system.data.total_devices}</dd></div>
+            <div><dt>Collector</dt><dd>{system.data.collector_running ? 'running' : 'stopped'}</dd></div>
+            <div><dt>API docs</dt><dd><a href={system.data.docs_url} target="_blank" rel="noreferrer">OpenAPI</a></dd></div>
+          </dl>
+        ) : (
+          <p className="widget-muted">Loading system info…</p>
+        )}
+        {collector.data && (
+          <p className="settings-hint">
+            Pollable devices: {collector.data.connector_enabled_devices} · circuits open:{' '}
+            {collector.data.circuits_open} · backoff: {collector.data.devices_in_backoff}
+          </p>
+        )}
+      </article>
 
       <div className="help-grid">
         <article className="card">

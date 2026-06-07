@@ -50,6 +50,9 @@ Widget instance `id` fields in exports are ignored on import; new UUIDs are assi
 | `ImportantDevicesStatusGrid` | Grid of flagged devices |
 | `IssuesList` | Active warnings and critical items |
 | `InventoryTable` | Compact inventory slice |
+| `CollectorStatus` | Collector scheduler health and backoff stats |
+| `SystemInfo` | App version, mode, and device totals |
+| `DeviceHealthTrend` | Important device up/down trend from status history |
 
 Each widget's `config` object is described in the catalog `description_for_llm` field.
 

@@ -10,8 +10,10 @@ import type {
   DashboardExport,
   Device,
   DeviceStatus,
+  DeviceStatusHistoryPoint,
   DeviceUpdate,
   DeviceWithStatus,
+  OperationalHistoryPoint,
   EncryptionStatus,
   EncryptionTestResult,
   ExternalReachability,
@@ -224,6 +226,18 @@ export interface SystemInfo {
 
 export function getSystemInfo() {
   return fetchJson<SystemInfo>('/api/v1/system/info')
+}
+
+export function getOperationalHistory(hours = 24) {
+  return fetchJson<OperationalHistoryPoint[]>(
+    `/api/v1/status/history?hours=${hours}&limit=200`,
+  )
+}
+
+export function getDeviceStatusHistory(deviceId: string, hours = 24) {
+  return fetchJson<DeviceStatusHistoryPoint[]>(
+    `/api/v1/devices/${deviceId}/status/history?hours=${hours}&limit=200`,
+  )
 }
 
 export function getReachabilitySettings() {

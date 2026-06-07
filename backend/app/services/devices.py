@@ -19,6 +19,7 @@ from app.schemas.device import (
 from app.collectors.factory import get_connector
 from app.collectors.helpers import ConnectorSkipped
 from app.services.crypto import decrypt_credentials, encrypt_credentials
+from app.services.status_history import record_device_status
 
 
 def to_device_read(device: Device) -> DeviceRead:
@@ -136,13 +137,15 @@ async def bulk_poll_devices(db: Session, device_ids: list[str]) -> BulkPollResul
     results: list[DeviceStatusRead] = []
     for device_id in device_ids:
         try:
-            results.append(await poll_device_now(db, device_id))
+            results.append(await poll_device_now(db, device_id, source="bulk"))
         except (ValueError, ConnectorSkipped):
             continue
     return BulkPollResult(polled=len(results), results=results)
 
 
-async def poll_device_now(db: Session, device_id: str) -> DeviceStatusRead:
+async def poll_device_now(
+    db: Session, device_id: str, *, source: str = "manual"
+) -> DeviceStatusRead:
     device = db.get(Device, device_id)
     if device is None:
         raise ValueError("Device not found")
@@ -167,6 +170,7 @@ async def poll_device_now(db: Session, device_id: str) -> DeviceStatusRead:
                 timestamp=timestamp,
             )
         )
+    record_device_status(db, status, source=source)
     db.commit()
     return status
 

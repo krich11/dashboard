@@ -8,7 +8,7 @@ from app.services.mock_scenario import get_active_mock_scenario
 
 router = APIRouter(prefix="/api/v1/system", tags=["system"])
 
-APP_VERSION = "1.4.0"
+APP_VERSION = "1.5.0"
 
 
 @router.get("/info")

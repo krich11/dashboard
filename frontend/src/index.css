@@ -767,6 +767,60 @@ a {
   background: rgba(47, 143, 98, 0.2);
 }
 
+.collector-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.collector-stats div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.collector-stats dt {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #9db0d3;
+}
+
+.collector-stats dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.about-panel {
+  margin-bottom: 16px;
+}
+
+.bulk-poll-results {
+  margin-bottom: 16px;
+}
+
+.device-history-panel {
+  margin-top: 12px;
+}
+
+.history-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.history-list li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
 .noc-launch {
   display: inline-flex;
   align-items: center;

@@ -13,7 +13,7 @@ import { DeviceDetailModal } from '../components/inventory/DeviceDetailModal'
 import { useQuery } from '@tanstack/react-query'
 import { getDevices } from '../api/client'
 import { useDevicesWithStatus } from '../hooks/useDashboardData'
-import type { DeviceWithStatus } from '../types/api'
+import type { DeviceStatus, DeviceWithStatus } from '../types/api'
 
 const DEVICE_TYPES = ['hpe_ilorest', 'juniper', 'aruba', 'linux_ssh']
 const STATUS_OPTIONS = ['ok', 'warning', 'critical', 'down', 'unknown']
@@ -28,6 +28,7 @@ export function InventoryPage() {
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set())
   const [importMessage, setImportMessage] = useState<string | null>(null)
   const [bulkMessage, setBulkMessage] = useState<string | null>(null)
+  const [bulkPollResults, setBulkPollResults] = useState<DeviceStatus[] | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const filters = useMemo(
@@ -79,8 +80,10 @@ export function InventoryPage() {
     mutationFn: bulkPollDevices,
     onSuccess: (result) => {
       setBulkMessage(`Polled ${result.polled} device(s).`)
+      setBulkPollResults(result.results)
       queryClient.invalidateQueries({ queryKey: ['devices-with-status'] })
       queryClient.invalidateQueries({ queryKey: ['high-level'] })
+      queryClient.invalidateQueries({ queryKey: ['operational-history'] })
     },
     onError: (err) =>
       setBulkMessage(err instanceof Error ? err.message : 'Bulk poll failed'),
@@ -176,6 +179,43 @@ export function InventoryPage() {
 
       {importMessage && <p className="settings-hint">{importMessage}</p>}
       {bulkMessage && <p className="settings-hint">{bulkMessage}</p>}
+
+      {bulkPollResults && bulkPollResults.length > 0 && (
+        <div className="card bulk-poll-results">
+          <div className="page-header inventory-header">
+            <h3>Bulk poll results</h3>
+            <button
+              type="button"
+              className="inline-btn"
+              onClick={() => setBulkPollResults(null)}
+            >
+              Dismiss
+            </button>
+          </div>
+          <table className="inventory-table">
+            <thead>
+              <tr>
+                <th>Device ID</th>
+                <th>Status</th>
+                <th>Message</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              {bulkPollResults.map((row) => (
+                <tr key={row.device_id}>
+                  <td>{row.device_id.slice(0, 8)}…</td>
+                  <td>
+                    <span className={`status-pill status-${row.overall}`}>{row.overall}</span>
+                  </td>
+                  <td>{row.message}</td>
+                  <td>{new Date(row.timestamp).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {checkedIds.size > 0 && (
         <div className="bulk-toolbar card">

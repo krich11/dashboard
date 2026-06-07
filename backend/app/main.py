@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.config import ROOT_DIR, get_settings
+from app.middleware.auth import AuthMiddleware
 from app.db.base import Base
 from app.db.session import SessionLocal, engine
 from app.routers import dashboards, devices, health, metrics, reachability, status, system, widgets
@@ -41,6 +42,7 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    app.add_middleware(AuthMiddleware)
     app.include_router(health.router)
     app.include_router(metrics.router)
     app.include_router(status.router)

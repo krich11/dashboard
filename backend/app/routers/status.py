@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.schemas.device import IssueItem
+from app.schemas.device import IssueItem, OperationalHistoryPoint
+from app.services import status_history as status_history_service
 from app.schemas.status import HighLevelSummary
 from app.services.aggregation import compute_high_level_summary
 from app.services.alert_service import maybe_send_banner_alert
@@ -24,3 +25,15 @@ def read_issues(
     db: Session = Depends(get_db),
 ) -> list[IssueItem]:
     return device_service.list_issues(db, important_only=important)
+
+
+@router.get("/history", response_model=list[OperationalHistoryPoint])
+def read_operational_history(
+    hours: int = Query(default=24, ge=1, le=168),
+    limit: int = Query(default=200, ge=1, le=1000),
+    important: bool = Query(default=True),
+    db: Session = Depends(get_db),
+) -> list[OperationalHistoryPoint]:
+    return status_history_service.get_operational_history(
+        db, hours=hours, limit=limit, important_only=important
+    )

@@ -61,6 +61,36 @@ WIDGET_CATALOG = [
         "priority": "P1",
         "data_source": "/api/v1/devices/with-status",
     },
+    {
+        "type": "CollectorStatus",
+        "title": "Collector Status",
+        "description_for_llm": (
+            "Shows collector scheduler health: running state, device counts, open circuits, "
+            "and devices in backoff. Config: title, refreshIntervalSec (number)."
+        ),
+        "priority": "P1",
+        "data_source": "/api/v1/settings/collector/status",
+    },
+    {
+        "type": "SystemInfo",
+        "title": "System Info",
+        "description_for_llm": (
+            "Application version, mock mode, collector state, and device totals. "
+            "Config: title, refreshIntervalSec (number)."
+        ),
+        "priority": "P1",
+        "data_source": "/api/v1/system/info",
+    },
+    {
+        "type": "DeviceHealthTrend",
+        "title": "Device Health Trend",
+        "description_for_llm": (
+            "Sparkline of important device up/down counts over time from status history. "
+            "Config: title, hours (number, default 24), refreshIntervalSec (number)."
+        ),
+        "priority": "P1",
+        "data_source": "/api/v1/status/history",
+    },
 ]
 
 

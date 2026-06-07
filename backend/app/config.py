@@ -15,7 +15,11 @@ class Settings(BaseSettings):
     testing: bool = False  # set TESTING=true in test runs
     database_url: str = f"sqlite:///{ROOT_DIR / 'data' / 'dashboard.db'}"
     dashboard_secret_key: str = "dev-only-change-in-production"
+    dashboard_api_key: str | None = None
     cors_origins: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
+
+    status_history_retention_days: int = 30
+    status_history_max_per_device: int = 5000
 
     collector_interval_sec: int = 60
     collector_concurrency: int = 8

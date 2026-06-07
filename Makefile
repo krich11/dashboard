@@ -1,4 +1,4 @@
-.PHONY: dev backend frontend test build seed-mocks smoke-test install backup ci
+.PHONY: dev backend frontend test build seed-mocks smoke-test install backup ci reset-phase
 
 PYTHON ?= python3
 PIP ?= $(PYTHON) -m pip
@@ -41,3 +41,7 @@ smoke-test:
 backup:
 	chmod +x scripts/backup.sh
 	./scripts/backup.sh
+
+reset-phase:
+	chmod +x scripts/reset_phase.sh
+	./scripts/reset_phase.sh

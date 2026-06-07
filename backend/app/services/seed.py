@@ -9,6 +9,7 @@ from app.models.settings import AppSettings
 from app.schemas.settings import ReachabilitySettings
 from app.services.dashboards import seed_default_dashboard
 from app.services.mock_data import get_device_statuses, get_devices, get_reachability_latest
+from app.services.status_history import record_device_status
 
 
 def _parse_ts(value: datetime | str) -> datetime:
@@ -47,6 +48,7 @@ def seed_from_mocks(db: Session) -> None:
                 timestamp=now,
             )
         )
+        record_device_status(db, status.model_copy(update={"timestamp": now}), source="seed")
 
     reach = get_reachability_latest(settings.mock_scenario)
     db.add(

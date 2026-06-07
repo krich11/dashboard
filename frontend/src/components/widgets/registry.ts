@@ -1,9 +1,12 @@
 import type { ComponentType } from 'react'
+import { CollectorStatus } from './CollectorStatus'
+import { DeviceHealthTrend } from './DeviceHealthTrend'
 import { ImportantDevicesStatusGrid } from './ImportantDevicesStatusGrid'
 import { InternetHealthTrend } from './InternetHealthTrend'
 import { InternetReachability } from './InternetReachability'
 import { InventoryTableWidget } from './InventoryTable'
 import { IssuesList } from './IssuesList'
+import { SystemInfo } from './SystemInfo'
 import { UpDownOverallStatus } from './UpDownOverallStatus'
 
 export type WidgetType =
@@ -13,6 +16,9 @@ export type WidgetType =
   | 'ImportantDevicesStatusGrid'
   | 'IssuesList'
   | 'InventoryTable'
+  | 'CollectorStatus'
+  | 'SystemInfo'
+  | 'DeviceHealthTrend'
 
 export interface WidgetDefinition {
   type: WidgetType
@@ -77,6 +83,33 @@ export const widgetRegistry: WidgetDefinition[] = [
     priority: 'P1',
     dataSource: '/api/v1/devices/with-status',
     component: InventoryTableWidget,
+  },
+  {
+    type: 'CollectorStatus',
+    title: 'Collector Status',
+    description_for_llm:
+      'Collector scheduler health: running, device counts, circuits, backoff. Config: title, refreshIntervalSec.',
+    priority: 'P1',
+    dataSource: '/api/v1/settings/collector/status',
+    component: CollectorStatus,
+  },
+  {
+    type: 'SystemInfo',
+    title: 'System Info',
+    description_for_llm:
+      'App version, mock mode, collector state, device totals. Config: title, refreshIntervalSec.',
+    priority: 'P1',
+    dataSource: '/api/v1/system/info',
+    component: SystemInfo,
+  },
+  {
+    type: 'DeviceHealthTrend',
+    title: 'Device Health Trend',
+    description_for_llm:
+      'Important device up/down trend from status history. Config: title, hours, refreshIntervalSec.',
+    priority: 'P1',
+    dataSource: '/api/v1/status/history',
+    component: DeviceHealthTrend,
   },
 ]
 

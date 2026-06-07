@@ -2,7 +2,7 @@
 
 Native-Linux datacenter status dashboard for ~67 devices with modular JSON-driven widgets.
 
-**v1.4** — Bulk device poll, system info API, operational banner, error boundary. Tags: `v1.0.0` … `v1.4.0`.
+**v1.5** — Device status history, 3 new widgets, ops scripts, auth-ready middleware. Tags: `v1.0.0` … `v1.5.0`.
 
 ## Quick start (development)
 
@@ -19,11 +19,17 @@ python3 -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 cd frontend && npm install && npm run dev
 ```
 
-Or run both:
+Or run both (detached — script exits immediately):
 
 ```bash
 chmod +x scripts/dev.sh
 ./scripts/dev.sh
+```
+
+Reset local DB to baseline mock state:
+
+```bash
+make reset-phase
 ```
 
 Open http://127.0.0.1:5173 (frontend proxies API to :8000).

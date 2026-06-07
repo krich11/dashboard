@@ -191,3 +191,19 @@ export interface ReachabilityHistoryPoint {
   ipv4_ok: boolean
   ipv6_ok: boolean
 }
+
+export interface DeviceStatusHistoryPoint {
+  device_id: string
+  overall: string
+  message: string
+  timestamp: string
+  source: string
+}
+
+export interface OperationalHistoryPoint {
+  timestamp: string
+  important_total: number
+  important_up: number
+  important_down: number
+  worst_overall: string
+}

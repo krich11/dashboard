@@ -8,6 +8,7 @@ from app.models.device import LatestStatus
 from app.models.reachability import ExternalReachabilityResult
 from app.models.settings import AppSettings
 from app.services.mock_data import get_device_statuses, get_reachability_latest
+from app.services.status_history import record_device_status
 
 VALID_SCENARIOS = tuple(json.loads((ROOT_DIR / "mocks" / "scenarios.json").read_text()).keys())
 
@@ -55,6 +56,9 @@ def apply_mock_scenario_to_db(db: Session, scenario: str) -> None:
                     timestamp=now,
                 )
             )
+        record_device_status(
+            db, status.model_copy(update={"timestamp": now}), source="scenario"
+        )
 
     reach = get_reachability_latest(scenario)
     db.add(

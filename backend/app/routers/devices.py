@@ -11,10 +11,12 @@ from app.schemas.device import (
     BulkPollResult,
     DeviceCreate,
     DeviceRead,
+    DeviceStatusHistoryPoint,
     DeviceStatusRead,
     DeviceUpdate,
     DeviceWithStatus,
 )
+from app.services import status_history as status_history_service
 from app.services import devices as device_service
 
 router = APIRouter(prefix="/api/v1/devices", tags=["devices"])
@@ -61,6 +63,20 @@ def get_device(device_id: str, db: Session = Depends(get_db)) -> DeviceRead:
     if device is None:
         raise HTTPException(status_code=404, detail="Device not found")
     return device_service.to_device_read(device)
+
+
+@router.get("/{device_id}/status/history", response_model=list[DeviceStatusHistoryPoint])
+def get_device_status_history(
+    device_id: str,
+    hours: int = Query(default=24, ge=1, le=168),
+    limit: int = Query(default=500, ge=1, le=5000),
+    db: Session = Depends(get_db),
+) -> list[DeviceStatusHistoryPoint]:
+    if device_service.get_device(db, device_id) is None:
+        raise HTTPException(status_code=404, detail="Device not found")
+    return status_history_service.get_device_status_history(
+        db, device_id, hours=hours, limit=limit
+    )
 
 
 @router.get("/{device_id}/status", response_model=DeviceStatusRead)

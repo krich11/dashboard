@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { deleteDevice, pollDevice, updateDevice } from '../../api/client'
+import { useQuery } from '@tanstack/react-query'
+import { deleteDevice, getDeviceStatusHistory, pollDevice, updateDevice } from '../../api/client'
 import type { DeviceUpdate, DeviceWithStatus } from '../../types/api'
 
 const DEVICE_TYPES = ['hpe_ilorest', 'juniper', 'aruba', 'linux_ssh']
@@ -70,11 +71,18 @@ export function DeviceDetailModal({ device, onClose }: Props) {
       setPollMessage(err instanceof Error ? err.message : 'Delete failed'),
   })
 
+  const history = useQuery({
+    queryKey: ['device-status-history', device.id],
+    queryFn: () => getDeviceStatusHistory(device.id, 24),
+  })
+
   const poll = useMutation({
     mutationFn: () => pollDevice(device.id),
     onSuccess: (status) => {
       queryClient.invalidateQueries({ queryKey: ['devices-with-status'] })
       queryClient.invalidateQueries({ queryKey: ['high-level'] })
+      queryClient.invalidateQueries({ queryKey: ['device-status-history', device.id] })
+      queryClient.invalidateQueries({ queryKey: ['operational-history'] })
       setPollMessage(`Poll OK: ${status.overall} — ${status.message}`)
     },
     onError: (err) =>
@@ -199,6 +207,23 @@ export function DeviceDetailModal({ device, onClose }: Props) {
                   {JSON.stringify(device.status.metrics, null, 2)}
                 </pre>
               )}
+            </div>
+          )}
+
+          {history.data && history.data.length > 0 && (
+            <div className="device-history-panel">
+              <h4>Status history (24h)</h4>
+              <ul className="history-list">
+                {[...history.data].reverse().slice(0, 8).map((point) => (
+                  <li key={`${point.timestamp}-${point.source}`}>
+                    <span className={`status-pill status-${point.overall}`}>{point.overall}</span>
+                    <span>{point.message}</span>
+                    <span className="widget-muted">
+                      {new Date(point.timestamp).toLocaleString()} · {point.source}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 

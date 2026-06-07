@@ -36,7 +36,8 @@ check "devices list" "$BASE_URL/api/v1/devices" '"name"'
 check "default dashboard" "$BASE_URL/api/v1/dashboards/default" "widgets"
 check "widget catalog" "$BASE_URL/api/v1/widgets/catalog" "UpDownOverallStatus"
 check "collector status" "$BASE_URL/api/v1/settings/collector/status" "total_devices"
-check "system info" "$BASE_URL/api/v1/system/info" '"version":"1.4.0"'
+check "system info" "$BASE_URL/api/v1/system/info" '"version":"1.5.0"'
+check "status history" "$BASE_URL/api/v1/status/history" "important_total"
 check "devices export" "$BASE_URL/api/v1/devices/export" "hostname"
 
 echo
