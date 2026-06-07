@@ -5,6 +5,9 @@ vendor/
 # Build output
 dist/
 build/
+frontend/dist/
+data/
+.venv/
 *.egg-info/
 __pycache__/
 *.pyc

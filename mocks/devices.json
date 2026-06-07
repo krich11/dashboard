@@ -1,0 +1,873 @@
+[
+  {
+    "id": "a380a58b-8d92-418d-879c-bcfcdb9ce5b0",
+    "name": "hpe-hpe_ilorest-01",
+    "hostname": "hpe01.dc.local",
+    "device_type": "hpe_ilorest",
+    "tags": [
+      "hpe",
+      "hpe_ilorest"
+    ],
+    "important_flag": true,
+    "management_ip": "10.0.129.10",
+    "connector_enabled": false
+  },
+  {
+    "id": "747075af-f5eb-4b1a-9f41-bf3f50dac423",
+    "name": "hpe-hpe_ilorest-02",
+    "hostname": "hpe02.dc.local",
+    "device_type": "hpe_ilorest",
+    "tags": [
+      "hpe",
+      "hpe_ilorest"
+    ],
+    "important_flag": true,
+    "management_ip": "10.0.129.11",
+    "connector_enabled": false
+  },
+  {
+    "id": "427980c9-cf99-423d-bfd6-bac3236993d8",
+    "name": "hpe-hpe_ilorest-03",
+    "hostname": "hpe03.dc.local",
+    "device_type": "hpe_ilorest",
+    "tags": [
+      "hpe",
+      "hpe_ilorest"
+    ],
+    "important_flag": true,
+    "management_ip": "10.0.129.12",
+    "connector_enabled": false
+  },
+  {
+    "id": "dc1460d5-3f4b-4e66-a577-391e8ea132fe",
+    "name": "hpe-hpe_ilorest-04",
+    "hostname": "hpe04.dc.local",
+    "device_type": "hpe_ilorest",
+    "tags": [
+      "hpe",
+      "hpe_ilorest"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.129.13",
+    "connector_enabled": false
+  },
+  {
+    "id": "057e36ac-6401-4dee-af35-b468ff785675",
+    "name": "hpe-hpe_ilorest-05",
+    "hostname": "hpe05.dc.local",
+    "device_type": "hpe_ilorest",
+    "tags": [
+      "hpe",
+      "hpe_ilorest"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.129.14",
+    "connector_enabled": false
+  },
+  {
+    "id": "89fc105d-bb54-46b9-b61f-09dc5621b380",
+    "name": "hpe-hpe_ilorest-06",
+    "hostname": "hpe06.dc.local",
+    "device_type": "hpe_ilorest",
+    "tags": [
+      "hpe",
+      "hpe_ilorest"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.129.15",
+    "connector_enabled": false
+  },
+  {
+    "id": "0eab2ee4-38a0-445a-a443-fa2bb703c653",
+    "name": "hpe-hpe_ilorest-07",
+    "hostname": "hpe07.dc.local",
+    "device_type": "hpe_ilorest",
+    "tags": [
+      "hpe",
+      "hpe_ilorest"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.129.16",
+    "connector_enabled": false
+  },
+  {
+    "id": "9bdcb44e-ca4d-4bb2-a4b4-b7394eed73a1",
+    "name": "juniper-juniper-01",
+    "hostname": "juniper01.dc.local",
+    "device_type": "juniper",
+    "tags": [
+      "juniper",
+      "juniper"
+    ],
+    "important_flag": true,
+    "management_ip": "10.0.185.10",
+    "connector_enabled": false
+  },
+  {
+    "id": "ba225b74-511e-45db-988f-979dd1bfe58c",
+    "name": "juniper-juniper-02",
+    "hostname": "juniper02.dc.local",
+    "device_type": "juniper",
+    "tags": [
+      "juniper",
+      "juniper"
+    ],
+    "important_flag": true,
+    "management_ip": "10.0.185.11",
+    "connector_enabled": false
+  },
+  {
+    "id": "28197591-ca35-4e97-b2b8-f2ddfda3d5da",
+    "name": "juniper-juniper-03",
+    "hostname": "juniper03.dc.local",
+    "device_type": "juniper",
+    "tags": [
+      "juniper",
+      "juniper"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.185.12",
+    "connector_enabled": false
+  },
+  {
+    "id": "c11d046d-d830-4c37-a71d-2654d280358f",
+    "name": "juniper-juniper-04",
+    "hostname": "juniper04.dc.local",
+    "device_type": "juniper",
+    "tags": [
+      "juniper",
+      "juniper"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.185.13",
+    "connector_enabled": false
+  },
+  {
+    "id": "a0ecf374-59ef-4519-90fd-ca2162a2eb77",
+    "name": "juniper-juniper-05",
+    "hostname": "juniper05.dc.local",
+    "device_type": "juniper",
+    "tags": [
+      "juniper",
+      "juniper"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.185.14",
+    "connector_enabled": false
+  },
+  {
+    "id": "969c9878-c821-47d1-811c-522e650eed28",
+    "name": "juniper-juniper-06",
+    "hostname": "juniper06.dc.local",
+    "device_type": "juniper",
+    "tags": [
+      "juniper",
+      "juniper"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.185.15",
+    "connector_enabled": false
+  },
+  {
+    "id": "c832d6ad-51e0-49a6-b5a2-93caf05a66ed",
+    "name": "juniper-juniper-07",
+    "hostname": "juniper07.dc.local",
+    "device_type": "juniper",
+    "tags": [
+      "juniper",
+      "juniper"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.185.16",
+    "connector_enabled": false
+  },
+  {
+    "id": "e7db9dbc-9d95-410f-bb38-0256ae130742",
+    "name": "juniper-juniper-08",
+    "hostname": "juniper08.dc.local",
+    "device_type": "juniper",
+    "tags": [
+      "juniper",
+      "juniper"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.185.17",
+    "connector_enabled": false
+  },
+  {
+    "id": "0981fc2d-802c-4252-b58d-92ec5a327702",
+    "name": "juniper-juniper-09",
+    "hostname": "juniper09.dc.local",
+    "device_type": "juniper",
+    "tags": [
+      "juniper",
+      "juniper"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.185.18",
+    "connector_enabled": false
+  },
+  {
+    "id": "bf1538c5-ab63-4819-8941-f2d7968aef2a",
+    "name": "juniper-juniper-10",
+    "hostname": "juniper10.dc.local",
+    "device_type": "juniper",
+    "tags": [
+      "juniper",
+      "juniper"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.185.19",
+    "connector_enabled": false
+  },
+  {
+    "id": "40f68a3b-962d-4f0b-9231-33c06a639ce4",
+    "name": "aruba-aruba-01",
+    "hostname": "aruba01.dc.local",
+    "device_type": "aruba",
+    "tags": [
+      "aruba",
+      "aruba"
+    ],
+    "important_flag": true,
+    "management_ip": "10.0.28.10",
+    "connector_enabled": false
+  },
+  {
+    "id": "b04fa649-0a39-4f82-8ab6-c41ee965303b",
+    "name": "aruba-aruba-02",
+    "hostname": "aruba02.dc.local",
+    "device_type": "aruba",
+    "tags": [
+      "aruba",
+      "aruba"
+    ],
+    "important_flag": true,
+    "management_ip": "10.0.28.11",
+    "connector_enabled": false
+  },
+  {
+    "id": "0a0d999e-1b91-4ba2-8005-02cf3d5031b2",
+    "name": "aruba-aruba-03",
+    "hostname": "aruba03.dc.local",
+    "device_type": "aruba",
+    "tags": [
+      "aruba",
+      "aruba"
+    ],
+    "important_flag": true,
+    "management_ip": "10.0.28.12",
+    "connector_enabled": false
+  },
+  {
+    "id": "4127eaae-afec-4fa1-9572-9e0b58061ef8",
+    "name": "aruba-aruba-04",
+    "hostname": "aruba04.dc.local",
+    "device_type": "aruba",
+    "tags": [
+      "aruba",
+      "aruba"
+    ],
+    "important_flag": true,
+    "management_ip": "10.0.28.13",
+    "connector_enabled": false
+  },
+  {
+    "id": "2ded6cf7-630d-44b1-adfd-5df84248406f",
+    "name": "aruba-aruba-05",
+    "hostname": "aruba05.dc.local",
+    "device_type": "aruba",
+    "tags": [
+      "aruba",
+      "aruba"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.28.14",
+    "connector_enabled": false
+  },
+  {
+    "id": "78e722e1-703e-4a8b-a4e7-a74718b1a2f5",
+    "name": "aruba-aruba-06",
+    "hostname": "aruba06.dc.local",
+    "device_type": "aruba",
+    "tags": [
+      "aruba",
+      "aruba"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.28.15",
+    "connector_enabled": false
+  },
+  {
+    "id": "f1a1c8d7-194c-408f-8b58-d24c51f8e2bf",
+    "name": "aruba-aruba-07",
+    "hostname": "aruba07.dc.local",
+    "device_type": "aruba",
+    "tags": [
+      "aruba",
+      "aruba"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.28.16",
+    "connector_enabled": false
+  },
+  {
+    "id": "e73cff81-017e-44a2-bc94-726f5471d114",
+    "name": "aruba-aruba-08",
+    "hostname": "aruba08.dc.local",
+    "device_type": "aruba",
+    "tags": [
+      "aruba",
+      "aruba"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.28.17",
+    "connector_enabled": false
+  },
+  {
+    "id": "89a9c7b6-07ea-49d2-8d96-6df1c5a904af",
+    "name": "aruba-aruba-09",
+    "hostname": "aruba09.dc.local",
+    "device_type": "aruba",
+    "tags": [
+      "aruba",
+      "aruba"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.28.18",
+    "connector_enabled": false
+  },
+  {
+    "id": "53069197-fdac-422d-898e-0fb271c40527",
+    "name": "aruba-aruba-10",
+    "hostname": "aruba10.dc.local",
+    "device_type": "aruba",
+    "tags": [
+      "aruba",
+      "aruba"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.28.19",
+    "connector_enabled": false
+  },
+  {
+    "id": "06984fa5-f6d3-4287-b592-ae537457d551",
+    "name": "aruba-aruba-11",
+    "hostname": "aruba11.dc.local",
+    "device_type": "aruba",
+    "tags": [
+      "aruba",
+      "aruba"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.28.20",
+    "connector_enabled": false
+  },
+  {
+    "id": "99b7127a-9a0c-4467-8f6f-aaa6df0b49cd",
+    "name": "aruba-aruba-12",
+    "hostname": "aruba12.dc.local",
+    "device_type": "aruba",
+    "tags": [
+      "aruba",
+      "aruba"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.28.21",
+    "connector_enabled": false
+  },
+  {
+    "id": "5a53ab90-34ca-4fee-a028-0e618f8b9cd0",
+    "name": "aruba-aruba-13",
+    "hostname": "aruba13.dc.local",
+    "device_type": "aruba",
+    "tags": [
+      "aruba",
+      "aruba"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.28.22",
+    "connector_enabled": false
+  },
+  {
+    "id": "0fb6d9e0-7d51-4288-a4e5-39c14134ca1e",
+    "name": "aruba-aruba-14",
+    "hostname": "aruba14.dc.local",
+    "device_type": "aruba",
+    "tags": [
+      "aruba",
+      "aruba"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.28.23",
+    "connector_enabled": false
+  },
+  {
+    "id": "75392b16-87e1-423e-8a22-ea1665460831",
+    "name": "aruba-aruba-15",
+    "hostname": "aruba15.dc.local",
+    "device_type": "aruba",
+    "tags": [
+      "aruba",
+      "aruba"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.28.24",
+    "connector_enabled": false
+  },
+  {
+    "id": "71c3bc7d-a209-4c1a-bd85-c8dab8f575b9",
+    "name": "aruba-aruba-16",
+    "hostname": "aruba16.dc.local",
+    "device_type": "aruba",
+    "tags": [
+      "aruba",
+      "aruba"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.28.25",
+    "connector_enabled": false
+  },
+  {
+    "id": "12727616-eece-483a-90d6-f05bed34ce4d",
+    "name": "aruba-aruba-17",
+    "hostname": "aruba17.dc.local",
+    "device_type": "aruba",
+    "tags": [
+      "aruba",
+      "aruba"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.28.26",
+    "connector_enabled": false
+  },
+  {
+    "id": "9dae0b2f-2c18-4387-b047-bd8512a9f7bf",
+    "name": "aruba-aruba-18",
+    "hostname": "aruba18.dc.local",
+    "device_type": "aruba",
+    "tags": [
+      "aruba",
+      "aruba"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.28.27",
+    "connector_enabled": false
+  },
+  {
+    "id": "d9412abc-feb6-4a03-9fa7-026daf1cec22",
+    "name": "aruba-aruba-19",
+    "hostname": "aruba19.dc.local",
+    "device_type": "aruba",
+    "tags": [
+      "aruba",
+      "aruba"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.28.28",
+    "connector_enabled": false
+  },
+  {
+    "id": "baaa837e-fcb0-4319-90e0-63c501ba67d6",
+    "name": "aruba-aruba-20",
+    "hostname": "aruba20.dc.local",
+    "device_type": "aruba",
+    "tags": [
+      "aruba",
+      "aruba"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.28.29",
+    "connector_enabled": false
+  },
+  {
+    "id": "52c47963-bce0-4e00-b6fe-87fd55845060",
+    "name": "linux-linux_ssh-01",
+    "hostname": "linux01.dc.local",
+    "device_type": "linux_ssh",
+    "tags": [
+      "linux",
+      "linux_ssh"
+    ],
+    "important_flag": true,
+    "management_ip": "10.0.149.10",
+    "connector_enabled": false
+  },
+  {
+    "id": "824e3abb-946c-4acd-9ae6-8f6c8bf5c4fd",
+    "name": "linux-linux_ssh-02",
+    "hostname": "linux02.dc.local",
+    "device_type": "linux_ssh",
+    "tags": [
+      "linux",
+      "linux_ssh"
+    ],
+    "important_flag": true,
+    "management_ip": "10.0.149.11",
+    "connector_enabled": false
+  },
+  {
+    "id": "4c66aebc-ac67-4009-8323-c76e7b0c09fd",
+    "name": "linux-linux_ssh-03",
+    "hostname": "linux03.dc.local",
+    "device_type": "linux_ssh",
+    "tags": [
+      "linux",
+      "linux_ssh"
+    ],
+    "important_flag": true,
+    "management_ip": "10.0.149.12",
+    "connector_enabled": false
+  },
+  {
+    "id": "d2789dac-d935-4254-9000-7164683af631",
+    "name": "linux-linux_ssh-04",
+    "hostname": "linux04.dc.local",
+    "device_type": "linux_ssh",
+    "tags": [
+      "linux",
+      "linux_ssh"
+    ],
+    "important_flag": true,
+    "management_ip": "10.0.149.13",
+    "connector_enabled": false
+  },
+  {
+    "id": "1d263ba5-4ecb-497d-aead-982ec812af6d",
+    "name": "linux-linux_ssh-05",
+    "hostname": "linux05.dc.local",
+    "device_type": "linux_ssh",
+    "tags": [
+      "linux",
+      "linux_ssh"
+    ],
+    "important_flag": true,
+    "management_ip": "10.0.149.14",
+    "connector_enabled": false
+  },
+  {
+    "id": "abfa944f-6b25-4e9e-adbf-2c70d2b3ef07",
+    "name": "linux-linux_ssh-06",
+    "hostname": "linux06.dc.local",
+    "device_type": "linux_ssh",
+    "tags": [
+      "linux",
+      "linux_ssh"
+    ],
+    "important_flag": true,
+    "management_ip": "10.0.149.15",
+    "connector_enabled": false
+  },
+  {
+    "id": "783268cd-4abf-423f-8220-0cb7f22d81e5",
+    "name": "linux-linux_ssh-07",
+    "hostname": "linux07.dc.local",
+    "device_type": "linux_ssh",
+    "tags": [
+      "linux",
+      "linux_ssh"
+    ],
+    "important_flag": true,
+    "management_ip": "10.0.149.16",
+    "connector_enabled": false
+  },
+  {
+    "id": "437b08ba-e94c-4688-9e0b-b84dccd935fa",
+    "name": "linux-linux_ssh-08",
+    "hostname": "linux08.dc.local",
+    "device_type": "linux_ssh",
+    "tags": [
+      "linux",
+      "linux_ssh"
+    ],
+    "important_flag": true,
+    "management_ip": "10.0.149.17",
+    "connector_enabled": false
+  },
+  {
+    "id": "99f11d30-2702-4355-bb19-48bf13c2adb8",
+    "name": "linux-linux_ssh-09",
+    "hostname": "linux09.dc.local",
+    "device_type": "linux_ssh",
+    "tags": [
+      "linux",
+      "linux_ssh"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.149.18",
+    "connector_enabled": false
+  },
+  {
+    "id": "285f5bf4-4b84-42bc-aac8-c63858363290",
+    "name": "linux-linux_ssh-10",
+    "hostname": "linux10.dc.local",
+    "device_type": "linux_ssh",
+    "tags": [
+      "linux",
+      "linux_ssh"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.149.19",
+    "connector_enabled": false
+  },
+  {
+    "id": "60f210ad-c392-42e3-8526-4f4d776440a0",
+    "name": "linux-linux_ssh-11",
+    "hostname": "linux11.dc.local",
+    "device_type": "linux_ssh",
+    "tags": [
+      "linux",
+      "linux_ssh"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.149.20",
+    "connector_enabled": false
+  },
+  {
+    "id": "6a4b28ee-555b-4179-b803-301d5a6f2fd8",
+    "name": "linux-linux_ssh-12",
+    "hostname": "linux12.dc.local",
+    "device_type": "linux_ssh",
+    "tags": [
+      "linux",
+      "linux_ssh"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.149.21",
+    "connector_enabled": false
+  },
+  {
+    "id": "9b34a17a-b8e2-431d-8892-50bcee105f39",
+    "name": "linux-linux_ssh-13",
+    "hostname": "linux13.dc.local",
+    "device_type": "linux_ssh",
+    "tags": [
+      "linux",
+      "linux_ssh"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.149.22",
+    "connector_enabled": false
+  },
+  {
+    "id": "478c4196-b99c-40a6-8daa-1e0953325fd3",
+    "name": "linux-linux_ssh-14",
+    "hostname": "linux14.dc.local",
+    "device_type": "linux_ssh",
+    "tags": [
+      "linux",
+      "linux_ssh"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.149.23",
+    "connector_enabled": false
+  },
+  {
+    "id": "ef2423e8-ff92-4cf1-af31-14770159bb68",
+    "name": "linux-linux_ssh-15",
+    "hostname": "linux15.dc.local",
+    "device_type": "linux_ssh",
+    "tags": [
+      "linux",
+      "linux_ssh"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.149.24",
+    "connector_enabled": false
+  },
+  {
+    "id": "2b726973-969c-4387-a1bd-97f234067019",
+    "name": "linux-linux_ssh-16",
+    "hostname": "linux16.dc.local",
+    "device_type": "linux_ssh",
+    "tags": [
+      "linux",
+      "linux_ssh"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.149.25",
+    "connector_enabled": false
+  },
+  {
+    "id": "3551fc91-79de-4c96-8012-e88a38e1d90c",
+    "name": "linux-linux_ssh-17",
+    "hostname": "linux17.dc.local",
+    "device_type": "linux_ssh",
+    "tags": [
+      "linux",
+      "linux_ssh"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.149.26",
+    "connector_enabled": false
+  },
+  {
+    "id": "7c80a82b-3357-48cc-a8e8-d22b76ec56a8",
+    "name": "linux-linux_ssh-18",
+    "hostname": "linux18.dc.local",
+    "device_type": "linux_ssh",
+    "tags": [
+      "linux",
+      "linux_ssh"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.149.27",
+    "connector_enabled": false
+  },
+  {
+    "id": "ee72020f-7a68-4f21-b43a-0e6d72317a83",
+    "name": "linux-linux_ssh-19",
+    "hostname": "linux19.dc.local",
+    "device_type": "linux_ssh",
+    "tags": [
+      "linux",
+      "linux_ssh"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.149.28",
+    "connector_enabled": false
+  },
+  {
+    "id": "eecfd8a5-1cc4-4483-a879-9658ee10246b",
+    "name": "linux-linux_ssh-20",
+    "hostname": "linux20.dc.local",
+    "device_type": "linux_ssh",
+    "tags": [
+      "linux",
+      "linux_ssh"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.149.29",
+    "connector_enabled": false
+  },
+  {
+    "id": "c50c5c9f-e942-456d-938f-1b97936a121c",
+    "name": "linux-linux_ssh-21",
+    "hostname": "linux21.dc.local",
+    "device_type": "linux_ssh",
+    "tags": [
+      "linux",
+      "linux_ssh"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.149.30",
+    "connector_enabled": false
+  },
+  {
+    "id": "a7a99f0d-1f11-4c58-8aa1-a8923054400f",
+    "name": "linux-linux_ssh-22",
+    "hostname": "linux22.dc.local",
+    "device_type": "linux_ssh",
+    "tags": [
+      "linux",
+      "linux_ssh"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.149.31",
+    "connector_enabled": false
+  },
+  {
+    "id": "95806624-8af5-4d5c-9a4d-7715ea481af0",
+    "name": "linux-linux_ssh-23",
+    "hostname": "linux23.dc.local",
+    "device_type": "linux_ssh",
+    "tags": [
+      "linux",
+      "linux_ssh"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.149.32",
+    "connector_enabled": false
+  },
+  {
+    "id": "b6cf1e19-685b-4423-8760-2f6e1877b7c4",
+    "name": "linux-linux_ssh-24",
+    "hostname": "linux24.dc.local",
+    "device_type": "linux_ssh",
+    "tags": [
+      "linux",
+      "linux_ssh"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.149.33",
+    "connector_enabled": false
+  },
+  {
+    "id": "d513d264-3cf1-4fb5-b2c7-8766376492d5",
+    "name": "linux-linux_ssh-25",
+    "hostname": "linux25.dc.local",
+    "device_type": "linux_ssh",
+    "tags": [
+      "linux",
+      "linux_ssh"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.149.34",
+    "connector_enabled": false
+  },
+  {
+    "id": "d466bf2b-353d-4b24-a13e-a17b3d504d0a",
+    "name": "linux-linux_ssh-26",
+    "hostname": "linux26.dc.local",
+    "device_type": "linux_ssh",
+    "tags": [
+      "linux",
+      "linux_ssh"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.149.35",
+    "connector_enabled": false
+  },
+  {
+    "id": "da934aaa-2169-49fe-9c1a-255fbd497151",
+    "name": "linux-linux_ssh-27",
+    "hostname": "linux27.dc.local",
+    "device_type": "linux_ssh",
+    "tags": [
+      "linux",
+      "linux_ssh"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.149.36",
+    "connector_enabled": false
+  },
+  {
+    "id": "0f515173-5679-4785-8d4b-1607817338a1",
+    "name": "linux-linux_ssh-28",
+    "hostname": "linux28.dc.local",
+    "device_type": "linux_ssh",
+    "tags": [
+      "linux",
+      "linux_ssh"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.149.37",
+    "connector_enabled": false
+  },
+  {
+    "id": "902c29fe-8435-4c38-bfa4-d055c088e8a0",
+    "name": "linux-linux_ssh-29",
+    "hostname": "linux29.dc.local",
+    "device_type": "linux_ssh",
+    "tags": [
+      "linux",
+      "linux_ssh"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.149.38",
+    "connector_enabled": false
+  },
+  {
+    "id": "36720139-6665-42ae-af81-4ade290bfe48",
+    "name": "linux-linux_ssh-30",
+    "hostname": "linux30.dc.local",
+    "device_type": "linux_ssh",
+    "tags": [
+      "linux",
+      "linux_ssh"
+    ],
+    "important_flag": false,
+    "management_ip": "10.0.149.39",
+    "connector_enabled": false
+  }
+]
