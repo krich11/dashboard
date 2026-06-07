@@ -2,6 +2,8 @@
 
 Native-Linux datacenter status dashboard for ~67 devices with modular JSON-driven widgets.
 
+**v1.0** — Phases 0–4 complete. Tags: `phase-0-complete` … `phase-4-complete`, `v1.0.0`.
+
 ## Quick start (development)
 
 ```bash

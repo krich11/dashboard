@@ -27,6 +27,7 @@ echo "Target: $BASE_URL"
 echo
 
 check "health" "$BASE_URL/health" '"status":"ok"'
+check "mock scenario api" "$BASE_URL/api/v1/settings/mock-scenario" '"scenario"'
 check "high-level status" "$BASE_URL/api/v1/status/high-level" "banner"
 check "reachability latest" "$BASE_URL/api/v1/reachability/latest" "overall"
 check "devices list" "$BASE_URL/api/v1/devices" '"name"'
