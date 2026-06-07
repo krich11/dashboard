@@ -1,5 +1,8 @@
 import type { ComponentType } from 'react'
+import { ImportantDevicesStatusGrid } from './ImportantDevicesStatusGrid'
 import { InternetReachability } from './InternetReachability'
+import { InventoryTableWidget } from './InventoryTable'
+import { IssuesList } from './IssuesList'
 import { UpDownOverallStatus } from './UpDownOverallStatus'
 
 export type WidgetType =
@@ -23,7 +26,7 @@ export const widgetRegistry: WidgetDefinition[] = [
     type: 'UpDownOverallStatus',
     title: 'Up/Down Overall Status',
     description_for_llm:
-      'Large operational banner showing important device up/down counts and internet health summary.',
+      'Large operational banner showing important device up/down counts and internet health summary. Config: title (string), showBreakdown (bool), refreshIntervalSec (number).',
     priority: 'P0',
     dataSource: '/api/v1/status/high-level',
     component: UpDownOverallStatus,
@@ -32,7 +35,7 @@ export const widgetRegistry: WidgetDefinition[] = [
     type: 'InternetReachability',
     title: 'Internet Reachability',
     description_for_llm:
-      'Shows IPv4 and IPv6 reachability status with per-target results and last check times.',
+      'Shows IPv4 and IPv6 reachability status with per-target results. Config: title, showTargets (bool), refreshIntervalSec (number).',
     priority: 'P0',
     dataSource: '/api/v1/reachability/latest',
     component: InternetReachability,
@@ -40,23 +43,29 @@ export const widgetRegistry: WidgetDefinition[] = [
   {
     type: 'ImportantDevicesStatusGrid',
     title: 'Important Devices Grid',
-    description_for_llm: 'Compact grid of important devices with status and key metrics.',
+    description_for_llm:
+      'Compact grid of important devices with status. Config: title, maxItems (number).',
     priority: 'P1',
     dataSource: '/api/v1/devices?important=true',
+    component: ImportantDevicesStatusGrid,
   },
   {
     type: 'IssuesList',
     title: 'Issues List',
-    description_for_llm: 'List of current warnings and critical issues from monitored devices.',
+    description_for_llm:
+      'List of current warnings and critical issues. Config: title, importantOnly (bool).',
     priority: 'P1',
     dataSource: '/api/v1/status/issues',
+    component: IssuesList,
   },
   {
     type: 'InventoryTable',
     title: 'Inventory Table',
-    description_for_llm: 'Searchable full inventory table of all monitored devices.',
+    description_for_llm:
+      'Compact searchable inventory table widget. Config: title, maxRows (number).',
     priority: 'P1',
-    dataSource: '/api/v1/devices',
+    dataSource: '/api/v1/devices/with-status',
+    component: InventoryTableWidget,
   },
 ]
 

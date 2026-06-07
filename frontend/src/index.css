@@ -414,3 +414,153 @@ a {
   overflow: auto;
   font-size: 0.8rem;
 }
+
+.dashboards-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.dashboard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.inline-btn.primary {
+  background: #1f6feb;
+  border-color: #1f6feb;
+}
+
+.inline-btn.danger {
+  color: #ff7b72;
+}
+
+.file-label {
+  cursor: pointer;
+}
+
+.dashboard-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+
+.tab {
+  border: 1px solid #2a3a5c;
+  background: #111a2d;
+  color: #b8c7e6;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.tab.active {
+  background: #1f6feb;
+  border-color: #1f6feb;
+  color: white;
+}
+
+.composer {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 16px;
+}
+
+.widget-palette {
+  height: fit-content;
+}
+
+.palette-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  margin-bottom: 6px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #2a3a5c;
+  background: #0f1728;
+  color: #dbe7ff;
+  cursor: pointer;
+}
+
+.dashboard-grid {
+  min-height: 400px;
+}
+
+.grid-widget-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  height: 100%;
+}
+
+.widget-toolbar {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  background: #111a2d;
+  border: 1px solid #2a3a5c;
+  border-radius: 8px;
+  padding: 4px 6px;
+}
+
+.widget-drag-handle {
+  cursor: grab;
+  color: #8aa0c8;
+}
+
+.device-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+.device-card {
+  border: 1px solid #2a3a5c;
+  border-radius: 8px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.issues-list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.issues-list li {
+  margin-bottom: 8px;
+}
+
+.inventory-table.compact th,
+.inventory-table.compact td {
+  padding: 6px;
+  font-size: 0.85rem;
+}
+
+.modal label {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.modal input,
+.modal textarea {
+  width: 100%;
+  margin-top: 4px;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #2a3a5c;
+  background: #0f1728;
+  color: #e8edf5;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}

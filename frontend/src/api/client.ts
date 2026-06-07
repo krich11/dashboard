@@ -1,9 +1,12 @@
 import type {
   Dashboard,
+  DashboardExport,
   Device,
   DeviceWithStatus,
   ExternalReachability,
   HighLevelSummary,
+  IssueItem,
+  WidgetInstance,
 } from '../types/api'
 
 const API_BASE = ''
@@ -54,6 +57,66 @@ export function updateDevice(deviceId: string, payload: Partial<Device>) {
 
 export function getDefaultDashboard() {
   return fetchJson<Dashboard>('/api/v1/dashboards/default')
+}
+
+export function listDashboards() {
+  return fetchJson<Dashboard[]>('/api/v1/dashboards')
+}
+
+export function getDashboard(id: string) {
+  return fetchJson<Dashboard>(`/api/v1/dashboards/${id}`)
+}
+
+export function createDashboard(payload: {
+  name: string
+  description?: string
+  layout?: Record<string, unknown>
+  is_default?: boolean
+  widgets?: Omit<WidgetInstance, 'id' | 'dashboard_id'>[]
+}) {
+  return fetchJson<Dashboard>('/api/v1/dashboards', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+}
+
+export function updateDashboard(
+  id: string,
+  payload: {
+    name?: string
+    description?: string
+    layout?: Record<string, unknown>
+    is_default?: boolean
+    widgets?: WidgetInstance[]
+  },
+) {
+  return fetchJson<Dashboard>(`/api/v1/dashboards/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+}
+
+export function deleteDashboard(id: string) {
+  return fetch(`${API_BASE}/api/v1/dashboards/${id}`, { method: 'DELETE' })
+}
+
+export function exportDashboard(id: string) {
+  return fetchJson<DashboardExport>(`/api/v1/dashboards/${id}/export`)
+}
+
+export function importDashboard(dashboard: DashboardExport, setAsDefault = false) {
+  return fetchJson<Dashboard>('/api/v1/dashboards/import', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ dashboard, set_as_default: setAsDefault }),
+  })
+}
+
+export function getIssues(importantOnly = false) {
+  const q = importantOnly ? '?important=true' : ''
+  return fetchJson<IssueItem[]>(`/api/v1/status/issues${q}`)
 }
 
 export function getHealth() {

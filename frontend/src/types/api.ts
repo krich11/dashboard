@@ -65,6 +65,24 @@ export interface WidgetInstance {
   grid_h: number
 }
 
+export interface IssueItem {
+  device_id: string
+  device_name: string
+  device_type: string
+  overall: string
+  message: string
+  important_flag: boolean
+  timestamp: string
+}
+
+export interface DashboardExport {
+  export_version: string
+  name: string
+  description: string | null
+  layout: Record<string, unknown>
+  widgets: Omit<WidgetInstance, 'dashboard_id'>[]
+}
+
 export interface Dashboard {
   id: string
   name: string

@@ -4,6 +4,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class WidgetInstanceBase(BaseModel):
+    id: str | None = None
     widget_type: str
     title: str = ""
     config: dict = Field(default_factory=dict)
@@ -46,3 +47,16 @@ class DashboardRead(DashboardBase):
     created_at: datetime
     updated_at: datetime
     widgets: list[WidgetInstanceRead] = Field(default_factory=list)
+
+
+class DashboardExport(BaseModel):
+    export_version: str = "1.0"
+    name: str
+    description: str | None = None
+    layout: dict = Field(default_factory=dict)
+    widgets: list[WidgetInstanceBase] = Field(default_factory=list)
+
+
+class DashboardImportRequest(BaseModel):
+    dashboard: DashboardExport
+    set_as_default: bool = False

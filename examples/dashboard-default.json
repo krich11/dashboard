@@ -1,0 +1,26 @@
+{
+  "export_version": "1.0",
+  "name": "Overview",
+  "description": "Default high-level operational view",
+  "layout": { "cols": 12, "rowHeight": 30 },
+  "widgets": [
+    {
+      "widget_type": "UpDownOverallStatus",
+      "title": "Overall Status",
+      "config": { "title": "Datacenter Status", "showBreakdown": true, "refreshIntervalSec": 30 },
+      "grid_x": 0,
+      "grid_y": 0,
+      "grid_w": 12,
+      "grid_h": 4
+    },
+    {
+      "widget_type": "InternetReachability",
+      "title": "Internet Reachability",
+      "config": { "title": "Internet Health", "showTargets": true, "refreshIntervalSec": 30 },
+      "grid_x": 0,
+      "grid_y": 4,
+      "grid_w": 12,
+      "grid_h": 4
+    }
+  ]
+}

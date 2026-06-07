@@ -2,7 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.schemas.dashboard import DashboardCreate, DashboardRead, DashboardUpdate
+from app.schemas.dashboard import (
+    DashboardCreate,
+    DashboardExport,
+    DashboardImportRequest,
+    DashboardRead,
+    DashboardUpdate,
+)
 from app.services import dashboards as dashboard_service
 
 router = APIRouter(prefix="/api/v1/dashboards", tags=["dashboards"])
@@ -42,3 +48,27 @@ def update_dashboard(
     if dashboard is None:
         raise HTTPException(status_code=404, detail="Dashboard not found")
     return dashboard
+
+
+@router.delete("/{dashboard_id}", status_code=204)
+def delete_dashboard(dashboard_id: str, db: Session = Depends(get_db)) -> None:
+    try:
+        if not dashboard_service.delete_dashboard(db, dashboard_id):
+            raise HTTPException(status_code=404, detail="Dashboard not found")
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.get("/{dashboard_id}/export", response_model=DashboardExport)
+def export_dashboard(dashboard_id: str, db: Session = Depends(get_db)) -> DashboardExport:
+    exported = dashboard_service.export_dashboard(db, dashboard_id)
+    if exported is None:
+        raise HTTPException(status_code=404, detail="Dashboard not found")
+    return exported
+
+
+@router.post("/import", response_model=DashboardRead, status_code=201)
+def import_dashboard(
+    payload: DashboardImportRequest, db: Session = Depends(get_db)
+) -> DashboardRead:
+    return dashboard_service.import_dashboard(db, payload)

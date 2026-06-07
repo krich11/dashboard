@@ -3,7 +3,14 @@ import uuid
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.dashboard import Dashboard, WidgetInstance
-from app.schemas.dashboard import DashboardCreate, DashboardRead, DashboardUpdate, WidgetInstanceBase
+from app.schemas.dashboard import (
+    DashboardCreate,
+    DashboardExport,
+    DashboardImportRequest,
+    DashboardRead,
+    DashboardUpdate,
+    WidgetInstanceBase,
+)
 
 
 def list_dashboards(db: Session) -> list[DashboardRead]:
@@ -45,7 +52,7 @@ def _apply_widgets(dashboard: Dashboard, widgets: list[WidgetInstanceBase]) -> N
     for widget in widgets:
         dashboard.widgets.append(
             WidgetInstance(
-                id=str(uuid.uuid4()),
+                id=widget.id or str(uuid.uuid4()),
                 widget_type=widget.widget_type,
                 title=widget.title,
                 config=widget.config,
@@ -94,6 +101,67 @@ def update_dashboard(db: Session, dashboard_id: str, payload: DashboardUpdate) -
     db.commit()
     db.refresh(dashboard)
     return DashboardRead.model_validate(dashboard)
+
+
+def delete_dashboard(db: Session, dashboard_id: str) -> bool:
+    dashboard = db.get(Dashboard, dashboard_id)
+    if dashboard is None:
+        return False
+    if dashboard.is_default:
+        raise ValueError("Cannot delete the default dashboard")
+    db.delete(dashboard)
+    db.commit()
+    return True
+
+
+def export_dashboard(db: Session, dashboard_id: str) -> DashboardExport | None:
+    dashboard = get_dashboard(db, dashboard_id)
+    if dashboard is None:
+        return None
+    return DashboardExport(
+        name=dashboard.name,
+        description=dashboard.description,
+        layout=dashboard.layout,
+        widgets=[
+            WidgetInstanceBase(
+                id=w.id,
+                widget_type=w.widget_type,
+                title=w.title,
+                config=w.config,
+                grid_x=w.grid_x,
+                grid_y=w.grid_y,
+                grid_w=w.grid_w,
+                grid_h=w.grid_h,
+            )
+            for w in dashboard.widgets
+        ],
+    )
+
+
+def import_dashboard(db: Session, payload: DashboardImportRequest) -> DashboardRead:
+    export = payload.dashboard
+    widgets = [
+        WidgetInstanceBase(
+            widget_type=w.widget_type,
+            title=w.title,
+            config=w.config,
+            grid_x=w.grid_x,
+            grid_y=w.grid_y,
+            grid_w=w.grid_w,
+            grid_h=w.grid_h,
+        )
+        for w in export.widgets
+    ]
+    return create_dashboard(
+        db,
+        DashboardCreate(
+            name=export.name,
+            description=export.description,
+            layout=export.layout,
+            is_default=payload.set_as_default,
+            widgets=widgets,
+        ),
+    )
 
 
 def seed_default_dashboard(db: Session) -> None:

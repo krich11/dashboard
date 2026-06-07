@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://datacenter-dashboard.local/schemas/widget-instance.json",
+  "title": "WidgetInstance",
+  "type": "object",
+  "required": ["widget_type", "grid_w", "grid_h"],
+  "properties": {
+    "id": { "type": ["string", "null"] },
+    "widget_type": {
+      "type": "string",
+      "enum": [
+        "UpDownOverallStatus",
+        "InternetReachability",
+        "ImportantDevicesStatusGrid",
+        "IssuesList",
+        "InventoryTable"
+      ]
+    },
+    "title": { "type": "string" },
+    "config": { "type": "object" },
+    "grid_x": { "type": "integer", "minimum": 0 },
+    "grid_y": { "type": "integer", "minimum": 0 },
+    "grid_w": { "type": "integer", "minimum": 1 },
+    "grid_h": { "type": "integer", "minimum": 1 }
+  }
+}
