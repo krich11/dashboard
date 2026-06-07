@@ -3,8 +3,8 @@ from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.orm import Session
 
-from app.config import get_settings
 from app.models.device import Device
+from app.services.settings_service import get_history_settings
 from app.models.status_history import DeviceStatusHistory
 from app.schemas.device import DeviceStatusHistoryPoint, DeviceStatusRead, OperationalHistoryPoint
 
@@ -209,10 +209,10 @@ def _summarize_tier(
 
 def prune_status_history(db: Session) -> int:
     """Roll up aged raw→hourly and hourly→daily tiers. Daily rows are kept forever."""
-    settings = get_settings()
+    history = get_history_settings(db)
     now = _naive_utc_now()
-    raw_cutoff = now - timedelta(days=settings.status_history_raw_days)
-    hourly_cutoff = now - timedelta(days=settings.status_history_hourly_days)
+    raw_cutoff = now - timedelta(days=history.raw_days)
+    hourly_cutoff = now - timedelta(days=history.hourly_days)
 
     summarized = 0
     summarized += _summarize_tier(

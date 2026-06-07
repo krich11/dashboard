@@ -13,6 +13,7 @@ from app.schemas.settings import (
     EncryptionStatus,
     EncryptionTestRequest,
     EncryptionTestResult,
+    HistorySettings,
     MockScenarioSettings,
     ReachabilitySettings,
 )
@@ -47,6 +48,18 @@ def update_collector_settings(
     payload: CollectorSettings, db: Session = Depends(get_db)
 ) -> CollectorSettings:
     return settings_service.update_collector_settings(db, payload)
+
+
+@router.get("/history", response_model=HistorySettings)
+def get_history_settings(db: Session = Depends(get_db)) -> HistorySettings:
+    return settings_service.get_history_settings(db)
+
+
+@router.put("/history", response_model=HistorySettings)
+def update_history_settings(
+    payload: HistorySettings, db: Session = Depends(get_db)
+) -> HistorySettings:
+    return settings_service.update_history_settings(db, payload)
 
 
 @router.get("/collector/status", response_model=CollectorStatus)

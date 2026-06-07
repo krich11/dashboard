@@ -173,6 +173,11 @@ export interface CollectorSettings {
   status_staleness_sec: number
 }
 
+export interface HistorySettings {
+  raw_days: number
+  hourly_days: number
+}
+
 export interface EncryptionStatus {
   configured: boolean
   is_dev_default: boolean

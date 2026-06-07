@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class ReachabilitySettings(BaseModel):
@@ -71,3 +71,14 @@ class CollectorStatus(BaseModel):
     connector_enabled_devices: int
     circuits_open: int
     devices_in_backoff: int
+
+
+class HistorySettings(BaseModel):
+    raw_days: int = Field(default=30, ge=1, le=365)
+    hourly_days: int = Field(default=90, ge=2, le=3650)
+
+    @model_validator(mode="after")
+    def hourly_must_exceed_raw(self) -> "HistorySettings":
+        if self.hourly_days <= self.raw_days:
+            raise ValueError("hourly_days must be greater than raw_days")
+        return self

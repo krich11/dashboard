@@ -5,6 +5,7 @@ import type {
   CollectorSettings,
   CollectorRunResult,
   CollectorStatus,
+  HistorySettings,
   Dashboard,
   DeviceCreate,
   DashboardExport,
@@ -296,6 +297,18 @@ export function updateMockScenario(scenario: string) {
 
 export function updateCollectorSettings(payload: CollectorSettings) {
   return fetchJson<CollectorSettings>('/api/v1/settings/collector', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+}
+
+export function getHistorySettings() {
+  return fetchJson<HistorySettings>('/api/v1/settings/history')
+}
+
+export function updateHistorySettings(payload: HistorySettings) {
+  return fetchJson<HistorySettings>('/api/v1/settings/history', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),

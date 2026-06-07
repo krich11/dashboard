@@ -4,6 +4,7 @@ import {
   getAlertSettings,
   getCollectorSettings,
   getCollectorStatus,
+  getHistorySettings,
   runCollectorOnce,
   getEncryptionStatus,
   getHealth,
@@ -13,10 +14,16 @@ import {
   testEncryption,
   updateAlertSettings,
   updateCollectorSettings,
+  updateHistorySettings,
   updateMockScenario,
   updateReachabilitySettings,
 } from '../api/client'
-import type { AlertSettings, CollectorSettings, ReachabilitySettings } from '../types/api'
+import type {
+  AlertSettings,
+  CollectorSettings,
+  HistorySettings,
+  ReachabilitySettings,
+} from '../types/api'
 
 function TargetListEditor({
   label,
@@ -56,6 +63,7 @@ function TargetListEditor({
 export function SettingsPage() {
   const queryClient = useQueryClient()
   const collector = useQuery({ queryKey: ['settings-collector'], queryFn: getCollectorSettings })
+  const history = useQuery({ queryKey: ['settings-history'], queryFn: getHistorySettings })
   const collectorStatus = useQuery({
     queryKey: ['collector-status'],
     queryFn: getCollectorStatus,
@@ -74,9 +82,11 @@ export function SettingsPage() {
   })
 
   const [collectorForm, setCollectorForm] = useState<CollectorSettings | null>(null)
+  const [historyForm, setHistoryForm] = useState<HistorySettings | null>(null)
   const [reachabilityForm, setReachabilityForm] = useState<ReachabilitySettings | null>(null)
   const [encryptionMessage, setEncryptionMessage] = useState<string | null>(null)
   const [collectorMessage, setCollectorMessage] = useState<string | null>(null)
+  const [historyMessage, setHistoryMessage] = useState<string | null>(null)
   const alerts = useQuery({ queryKey: ['settings-alerts'], queryFn: getAlertSettings })
   const [alertsForm, setAlertsForm] = useState<AlertSettings | null>(null)
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
@@ -84,6 +94,10 @@ export function SettingsPage() {
   useEffect(() => {
     if (collector.data) setCollectorForm(collector.data)
   }, [collector.data])
+
+  useEffect(() => {
+    if (history.data) setHistoryForm(history.data)
+  }, [history.data])
 
   useEffect(() => {
     if (reachability.data) setReachabilityForm(reachability.data)
@@ -96,6 +110,17 @@ export function SettingsPage() {
   const saveCollector = useMutation({
     mutationFn: updateCollectorSettings,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['settings-collector'] }),
+  })
+
+  const saveHistory = useMutation({
+    mutationFn: updateHistorySettings,
+    onSuccess: () => {
+      setHistoryMessage('History tier settings saved.')
+      queryClient.invalidateQueries({ queryKey: ['settings-history'] })
+      queryClient.invalidateQueries({ queryKey: ['system-info'] })
+    },
+    onError: (err) =>
+      setHistoryMessage(err instanceof Error ? err.message : 'Failed to save history settings'),
   })
 
   const saveAlerts = useMutation({
@@ -152,7 +177,7 @@ export function SettingsPage() {
     <section className="page">
       <div className="page-header">
         <h2>Settings</h2>
-        <p>Collector, reachability, and credential encryption configuration.</p>
+        <p>Collector, status history, reachability, and credential encryption configuration.</p>
       </div>
 
       <div className="settings-grid">
@@ -291,6 +316,56 @@ export function SettingsPage() {
               </label>
               <button type="submit" className="inline-btn primary" disabled={saveCollector.isPending}>
                 {saveCollector.isPending ? 'Saving…' : 'Save collector settings'}
+              </button>
+            </form>
+          )}
+        </article>
+
+        <article className="card settings-card">
+          <h3>Status history tiers</h3>
+          <p className="settings-hint">
+            Raw polls are kept for the first threshold, then rolled up to hourly, then daily.
+            Daily summaries are kept forever. Env vars set defaults until saved here.
+          </p>
+          {historyMessage && <p className="settings-hint">{historyMessage}</p>}
+          {historyForm && (
+            <form
+              className="settings-form"
+              onSubmit={(e) => {
+                e.preventDefault()
+                saveHistory.mutate(historyForm)
+              }}
+            >
+              <label>
+                Raw retention (days) — summarize to hourly after
+                <input
+                  type="number"
+                  min={1}
+                  max={365}
+                  value={historyForm.raw_days}
+                  onChange={(e) =>
+                    setHistoryForm({ ...historyForm, raw_days: Number(e.target.value) })
+                  }
+                />
+              </label>
+              <label>
+                Hourly retention (days) — summarize to daily after
+                <input
+                  type="number"
+                  min={2}
+                  max={3650}
+                  value={historyForm.hourly_days}
+                  onChange={(e) =>
+                    setHistoryForm({ ...historyForm, hourly_days: Number(e.target.value) })
+                  }
+                />
+              </label>
+              <p className="settings-hint">
+                Current pipeline: raw {historyForm.raw_days}d → hourly until{' '}
+                {historyForm.hourly_days}d → daily ∞
+              </p>
+              <button type="submit" className="inline-btn primary" disabled={saveHistory.isPending}>
+                {saveHistory.isPending ? 'Saving…' : 'Save history settings'}
               </button>
             </form>
           )}

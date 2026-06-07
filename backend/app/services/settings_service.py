@@ -5,6 +5,7 @@ from app.schemas.settings import (
     EncryptionStatus,
     EncryptionTestRequest,
     EncryptionTestResult,
+    HistorySettings,
 )
 from app.services.crypto import CredentialCipher
 from sqlalchemy.orm import Session
@@ -30,6 +31,26 @@ def get_collector_settings(db: Session) -> CollectorSettings:
         "status_staleness_sec": settings.status_staleness_sec,
     }
     return CollectorSettings(**_get_or_default(db, "collector", defaults))
+
+
+def get_history_settings(db: Session) -> HistorySettings:
+    settings = get_settings()
+    defaults = {
+        "raw_days": settings.status_history_raw_days,
+        "hourly_days": settings.status_history_hourly_days,
+    }
+    return HistorySettings(**_get_or_default(db, "history", defaults))
+
+
+def update_history_settings(db: Session, payload: HistorySettings) -> HistorySettings:
+    row = db.get(AppSettings, "history")
+    if row is None:
+        row = AppSettings(key="history", value=payload.model_dump())
+        db.add(row)
+    else:
+        row.value = payload.model_dump()
+    db.commit()
+    return payload
 
 
 def update_collector_settings(db: Session, payload: CollectorSettings) -> CollectorSettings:

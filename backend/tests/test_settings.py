@@ -61,6 +61,25 @@ def test_reachability_history():
     assert "overall" in history[-1]
 
 
+def test_history_settings_roundtrip():
+    payload = {"raw_days": 14, "hourly_days": 60}
+    response = client.put("/api/v1/settings/history", json=payload)
+    assert response.status_code == 200
+    assert response.json()["raw_days"] == 14
+
+    fetched = client.get("/api/v1/settings/history").json()
+    assert fetched["hourly_days"] == 60
+
+    info = client.get("/api/v1/system/info").json()
+    assert info["history_raw_days"] == 14
+    assert info["history_hourly_days"] == 60
+
+
+def test_history_settings_validation():
+    response = client.put("/api/v1/settings/history", json={"raw_days": 90, "hourly_days": 30})
+    assert response.status_code == 422
+
+
 def test_widget_catalog():
     catalog = client.get("/api/v1/widgets/catalog").json()
     types = {w["type"] for w in catalog}
