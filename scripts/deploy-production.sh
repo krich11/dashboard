@@ -199,8 +199,15 @@ if [[ "\$SKIP_RESTART" != "true" ]]; then
   log_step "systemctl restart dashboard.service"
   systemctl restart dashboard.service >> "\$LOG_FILE" 2>&1
   sleep 2
-  systemctl is-active --quiet dashboard.service
-  curl -sf "http://127.0.0.1:\$PORT/health" | grep -q '"status":"ok"'
+  if ! systemctl is-active --quiet dashboard.service; then
+    systemctl status dashboard.service --no-pager >> "\$LOG_FILE" 2>&1 || true
+    journalctl -u dashboard.service -n 30 --no-pager >> "\$LOG_FILE" 2>&1 || true
+    exit 1
+  fi
+  if ! curl -sf "http://127.0.0.1:\$PORT/health" | grep -q '"status":"ok"'; then
+    journalctl -u dashboard.service -n 30 --no-pager >> "\$LOG_FILE" 2>&1 || true
+    exit 1
+  fi
   PID=\$(systemctl show -p MainPID --value dashboard.service)
   USER=\$(ps -o user= -p "\$PID" | tr -d ' ')
   [[ "\$USER" == "\$SERVICE_USER" ]]
