@@ -1,0 +1,12 @@
+# Project MCP — browser verification for the dashboard UI.
+# Requires a display (KDE/Konsole on the same machine as the dashboard).
+[mcp_servers.playwright]
+command = "/home/krich/.nvm/versions/node/v22.22.3/bin/npx"
+args = [
+  "@playwright/mcp@latest",
+  "--allowed-hosts", "127.0.0.1,localhost",
+]
+env = { npm_config_yes = "true" }
+enabled = true
+startup_timeout_sec = 45
+tool_timeout_sec = 120
