@@ -282,7 +282,7 @@ async def fingerprint_target(
         return _mock_fingerprint(target, device_type_hint, attempts)
 
     methods: list[str] = []
-    reachable = await ping_host(target)
+    reachable, _latency = await ping_host(target)
     if reachable:
         methods.append("ping")
 

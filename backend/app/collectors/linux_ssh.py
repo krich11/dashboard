@@ -34,14 +34,18 @@ class LinuxSSHConnector(DeviceConnector):
                 output = stdout.read().decode("utf-8", errors="replace").strip()
                 lines = [line for line in output.splitlines() if line.strip()]
                 metrics: dict[str, float | int | str] = {}
-                if lines:
-                    parts = lines[0].split()
-                    if len(parts) >= 3:
-                        metrics["load_1m"] = float(parts[0])
-                if len(lines) > 1:
-                    mem_parts = lines[1].split()
-                    if len(mem_parts) == 2:
-                        used, total = int(mem_parts[0]), int(mem_parts[1])
+                for line in lines:
+                    parts = line.split()
+                    if len(parts) >= 3 and "load_1m" not in metrics:
+                        try:
+                            metrics["load_1m"] = float(parts[0])
+                        except ValueError:
+                            continue
+                    if len(parts) == 2 and "mem_used_mb" not in metrics:
+                        try:
+                            used, total = int(parts[0]), int(parts[1])
+                        except ValueError:
+                            continue
                         metrics["mem_used_mb"] = used
                         metrics["mem_total_mb"] = total
                         metrics["mem_pct"] = round(used / total * 100, 1) if total else 0
@@ -70,7 +74,7 @@ class LinuxSSHConnector(DeviceConnector):
                 raise ConnectorError("paramiko is required for Linux SSH polling") from exc
             return await self._poll_paramiko(device_id, target, username, password)
 
-        reachable = await ping_host(target)
+        reachable, _latency = await ping_host(target)
         if not reachable:
             return make_status(
                 device_id,

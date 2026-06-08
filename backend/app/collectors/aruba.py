@@ -42,7 +42,7 @@ class ArubaConnector(DeviceConnector):
             except Exception:
                 pass
 
-        reachable = await ping_host(target)
+        reachable, _latency = await ping_host(target)
         if not reachable:
             return make_status(
                 device_id,

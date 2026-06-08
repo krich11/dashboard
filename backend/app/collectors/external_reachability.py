@@ -21,8 +21,8 @@ async def _ping_target(target: str, family: str, timeout_sec: int) -> tuple[bool
     from app.collectors.helpers import ping_host
 
     try:
-        ok = await ping_host(target, timeout_sec=timeout_sec, family=family)
-        return ok, None, None if ok else "ping failed"
+        ok, latency = await ping_host(target, timeout_sec=timeout_sec, family=family)
+        return ok, latency, None if ok else "ping failed"
     except Exception as exc:  # noqa: BLE001
         return False, None, str(exc)
 

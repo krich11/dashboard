@@ -46,8 +46,8 @@ async def test_linux_ping_fallback_without_credentials(monkeypatch):
         device.credentials_encrypted = None
         device.management_ip = "127.0.0.1"
 
-        async def always_ping(_target: str, timeout_sec: int = 5) -> bool:
-            return True
+        async def always_ping(_target: str, timeout_sec: int = 5, **_kwargs) -> tuple[bool, int | None]:
+            return True, 1
 
         monkeypatch.setattr("app.collectors.linux_ssh.ping_host", always_ping)
         status = await LinuxSSHConnector(db).poll(device.id)

@@ -27,6 +27,7 @@ async def lifespan(_: FastAPI):
         db.close()
     if not settings.testing:
         collector_service.start()
+        await collector_service.run_once()
     yield
     if not settings.testing:
         collector_service.stop()

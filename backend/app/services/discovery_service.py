@@ -262,7 +262,7 @@ async def test_device_credentials(
                 overall="ok" if ok else "down",
             )
         if device.device_type == "linux_ssh":
-            reachable = await ping_host(target)
+            reachable, _latency = await ping_host(target)
             return CredentialTestResult(
                 ok=reachable,
                 message="Ping reachable (no SSH credentials to test)"

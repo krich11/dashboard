@@ -55,15 +55,20 @@ def make_status(
     )
 
 
-def _ping_sync(target: str, timeout_sec: int, family: str | None) -> bool:
+def _ping_sync(target: str, timeout_sec: int, family: str | None) -> tuple[bool, int | None]:
     from icmplib import ping as icmp_ping
 
     try:
-        return icmp_ping(target, count=1, timeout=timeout_sec, privileged=True).is_alive
+        host = icmp_ping(target, count=1, timeout=timeout_sec, privileged=True)
+        if host.is_alive:
+            latency = int(host.avg_rtt) if host.avg_rtt is not None else None
+            return True, latency
+        return False, None
     except Exception:
         pass
 
     import subprocess
+    import time
 
     cmd = ["ping", "-c", "1", "-W", str(timeout_sec)]
     if family == "ipv6":
@@ -72,20 +77,23 @@ def _ping_sync(target: str, timeout_sec: int, family: str | None) -> bool:
         cmd[1:1] = ["-4"]
     cmd.append(target)
     try:
-        return (
-            subprocess.run(
-                cmd,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                check=False,
-            ).returncode
-            == 0
+        started = time.monotonic()
+        completed = subprocess.run(
+            cmd,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
         )
+        if completed.returncode == 0:
+            return True, int((time.monotonic() - started) * 1000)
+        return False, None
     except Exception:
-        return False
+        return False, None
 
 
-async def ping_host(target: str, timeout_sec: int = 5, *, family: str | None = None) -> bool:
+async def ping_host(
+    target: str, timeout_sec: int = 5, *, family: str | None = None
+) -> tuple[bool, int | None]:
     if family is None:
         if ":" in target:
             family = "ipv6"
