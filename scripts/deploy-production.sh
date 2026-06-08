@@ -182,6 +182,20 @@ LOG_FILE="$log_file"
 
 log_step() { printf '==> %s\n' "\$*" >> "\$LOG_FILE"; }
 
+wait_for_health() {
+  local port="\$1"
+  local attempt
+  for attempt in \$(seq 1 45); do
+    if systemctl is-active --quiet dashboard.service && \
+       curl -sf "http://127.0.0.1:\${port}/health" | grep -q '"status":"ok"'; then
+      log_step "health check passed (attempt \${attempt})"
+      return 0
+    fi
+    sleep 1
+  done
+  return 1
+}
+
 log_step "chown \$INSTALL_DIR"
 chown -R "\$SERVICE_USER:\$SERVICE_USER" "\$INSTALL_DIR"
 chown "\$SERVICE_USER:\$SERVICE_USER" "\$INSTALL_DIR/.env"
@@ -198,13 +212,8 @@ fi
 if [[ "\$SKIP_RESTART" != "true" ]]; then
   log_step "systemctl restart dashboard.service"
   systemctl restart dashboard.service >> "\$LOG_FILE" 2>&1
-  sleep 2
-  if ! systemctl is-active --quiet dashboard.service; then
+  if ! wait_for_health "\$PORT"; then
     systemctl status dashboard.service --no-pager >> "\$LOG_FILE" 2>&1 || true
-    journalctl -u dashboard.service -n 30 --no-pager >> "\$LOG_FILE" 2>&1 || true
-    exit 1
-  fi
-  if ! curl -sf "http://127.0.0.1:\$PORT/health" | grep -q '"status":"ok"'; then
     journalctl -u dashboard.service -n 30 --no-pager >> "\$LOG_FILE" 2>&1 || true
     exit 1
   fi
@@ -278,11 +287,22 @@ if [[ -x "\$INSTALL_DIR/.venv/bin/pip" ]]; then
   sudo -u "\$SERVICE_USER" env PIP_DISABLE_PIP_VERSION_CHECK=1 \
     "\$INSTALL_DIR/.venv/bin/pip" install -qq -r "\$INSTALL_DIR/backend/requirements.txt" >/dev/null 2>&1
 fi
+wait_for_health() {
+  local port="\$1"
+  local attempt
+  for attempt in \$(seq 1 45); do
+    if systemctl is-active --quiet dashboard.service && \
+       curl -sf "http://127.0.0.1:\${port}/health" | grep -q '"status":"ok"'; then
+      return 0
+    fi
+    sleep 1
+  done
+  return 1
+}
+
 if [[ "\$SKIP_RESTART" != "true" ]]; then
   systemctl restart dashboard.service
-  sleep 2
-  systemctl is-active --quiet dashboard.service
-  curl -sf "http://127.0.0.1:\$PORT/health" | grep -q '"status":"ok"'
+  wait_for_health "\$PORT"
 fi
 REMOTE
   check_ok "remote deploy"
