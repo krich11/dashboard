@@ -17,7 +17,9 @@ Restart=on-failure
 RestartSec=5
 TimeoutStopSec=30
 
-# SQLite DB, discovery probes, collector polling
+# SQLite DB, discovery probes, collector polling (ICMP via icmplib)
+AmbientCapabilities=CAP_NET_RAW
+CapabilityBoundingSet=CAP_NET_RAW
 NoNewPrivileges=true
 ReadWritePaths=/opt/dashboard/data /opt/dashboard/backups
 

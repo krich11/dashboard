@@ -55,19 +55,43 @@ def make_status(
     )
 
 
-async def ping_host(target: str, timeout_sec: int = 5) -> bool:
-    proc = await asyncio.create_subprocess_exec(
-        "ping",
-        "-c",
-        "1",
-        "-W",
-        str(timeout_sec),
-        target,
-        stdout=asyncio.subprocess.DEVNULL,
-        stderr=asyncio.subprocess.DEVNULL,
-    )
-    rc = await proc.wait()
-    return rc == 0
+def _ping_sync(target: str, timeout_sec: int, family: str | None) -> bool:
+    from icmplib import ping as icmp_ping
+
+    try:
+        return icmp_ping(target, count=1, timeout=timeout_sec, privileged=True).is_alive
+    except Exception:
+        pass
+
+    import subprocess
+
+    cmd = ["ping", "-c", "1", "-W", str(timeout_sec)]
+    if family == "ipv6":
+        cmd[1:1] = ["-6"]
+    elif family == "ipv4":
+        cmd[1:1] = ["-4"]
+    cmd.append(target)
+    try:
+        return (
+            subprocess.run(
+                cmd,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
+            ).returncode
+            == 0
+        )
+    except Exception:
+        return False
+
+
+async def ping_host(target: str, timeout_sec: int = 5, *, family: str | None = None) -> bool:
+    if family is None:
+        if ":" in target:
+            family = "ipv6"
+        elif "." in target:
+            family = "ipv4"
+    return await asyncio.to_thread(_ping_sync, target, timeout_sec, family)
 
 
 async def http_get_json(

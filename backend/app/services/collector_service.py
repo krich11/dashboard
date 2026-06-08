@@ -97,74 +97,76 @@ class CollectorService:
                 if self._backoff.get(d.id, DeviceBackoffState()).next_poll_at <= now
                 and not self._backoff.get(d.id, DeviceBackoffState()).circuit_open
             ]
-            if not due:
-                return
-            await asyncio.gather(*(self._poll_one(db, device) for device in due))
-            db.commit()
         finally:
             db.close()
+        if not due:
+            return
+        await asyncio.gather(*(self._poll_one(device) for device in due))
 
-    async def _poll_one(self, db: Session, device: Device) -> None:
-        collector = get_collector_settings(db)
+    def _write_status(self, db: Session, status: DeviceStatusRead) -> None:
+        existing = db.query(LatestStatus).filter(LatestStatus.device_id == status.device_id).first()
+        ts = status.timestamp.replace(tzinfo=None)
+        if existing:
+            existing.overall = status.overall
+            existing.message = status.message
+            existing.metrics = status.metrics
+            existing.details = status.details
+            existing.timestamp = ts
+        else:
+            db.add(
+                LatestStatus(
+                    device_id=status.device_id,
+                    overall=status.overall,
+                    message=status.message,
+                    metrics=status.metrics,
+                    details=status.details,
+                    timestamp=ts,
+                )
+            )
+        record_device_status(db, status, source="collector")
+
+    async def _poll_one(self, device: Device) -> None:
         assert self._semaphore is not None
         async with self._semaphore:
-            state = self._backoff.setdefault(device.id, DeviceBackoffState())
+            db = SessionLocal()
             try:
-                connector = get_connector(db, device)
-                status = await connector.poll(device.id)
-                existing = db.query(LatestStatus).filter(LatestStatus.device_id == device.id).first()
-                if existing:
-                    existing.overall = status.overall
-                    existing.message = status.message
-                    existing.metrics = status.metrics
-                    existing.details = status.details
-                    existing.timestamp = status.timestamp.replace(tzinfo=None)
-                else:
-                    db.add(
-                        LatestStatus(
-                            device_id=device.id,
-                            overall=status.overall,
-                            message=status.message,
-                            metrics=status.metrics,
-                            details=status.details,
-                            timestamp=status.timestamp.replace(tzinfo=None),
-                        )
+                collector = get_collector_settings(db)
+                state = self._backoff.setdefault(device.id, DeviceBackoffState())
+                try:
+                    connector = get_connector(db, device)
+                    status = await connector.poll(device.id)
+                    self._write_status(db, status)
+                    state.failures = 0
+                    state.circuit_open = False
+                    state.next_poll_at = datetime.now(UTC) + timedelta(
+                        seconds=collector.interval_sec
                     )
-                record_device_status(db, status, source="collector")
-                state.failures = 0
-                state.circuit_open = False
-                state.next_poll_at = datetime.now(UTC) + timedelta(
-                    seconds=collector.interval_sec
-                )
-            except ConnectorSkipped:
-                return
-            except Exception as exc:  # noqa: BLE001
-                state.failures += 1
-                backoff = min(
-                    collector.default_backoff_sec * state.failures,
-                    collector.max_backoff_sec,
-                )
-                state.next_poll_at = datetime.now(UTC) + timedelta(seconds=backoff)
-                if state.failures >= collector.circuit_breaker_threshold:
-                    state.circuit_open = True
-                existing = db.query(LatestStatus).filter(LatestStatus.device_id == device.id).first()
-                if existing:
+                except ConnectorSkipped:
+                    return
+                except Exception as exc:  # noqa: BLE001
+                    state.failures += 1
+                    backoff = min(
+                        collector.default_backoff_sec * state.failures,
+                        collector.max_backoff_sec,
+                    )
+                    state.next_poll_at = datetime.now(UTC) + timedelta(seconds=backoff)
+                    if state.failures >= collector.circuit_breaker_threshold:
+                        state.circuit_open = True
                     ts = datetime.now(UTC).replace(tzinfo=None)
-                    existing.overall = "unknown"
-                    existing.message = f"Collector error: {exc}"
-                    existing.timestamp = ts
-                    record_device_status(
+                    self._write_status(
                         db,
                         DeviceStatusRead(
                             device_id=device.id,
                             overall="unknown",
                             message=f"Collector error: {exc}",
-                            metrics=existing.metrics or {},
-                            details=existing.details or {},
+                            metrics={},
+                            details={},
                             timestamp=ts,
                         ),
-                        source="collector",
                     )
+                db.commit()
+            finally:
+                db.close()
 
     async def run_once(self) -> dict:
         settings = get_settings()
@@ -177,12 +179,11 @@ class CollectorService:
             devices = db.query(Device).all()
             if not settings.mock_mode:
                 devices = [d for d in devices if d.connector_enabled]
-            if devices:
-                await asyncio.gather(*(self._poll_one(db, device) for device in devices))
-            db.commit()
-            return {"devices_polled": len(devices), "reachability": True}
         finally:
             db.close()
+        if devices:
+            await asyncio.gather(*(self._poll_one(device) for device in devices))
+        return {"devices_polled": len(devices), "reachability": True}
 
 
 collector_service = CollectorService()

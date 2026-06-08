@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import subprocess
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from typing import Any
@@ -19,22 +18,12 @@ CheckFn = Callable[[str, str, int], Awaitable[tuple[bool, int | None, str | None
 
 
 async def _ping_target(target: str, family: str, timeout_sec: int) -> tuple[bool, int | None, str | None]:
-    flag = "-6" if family == "ipv6" else "-4"
+    from app.collectors.helpers import ping_host
+
     try:
-        proc = await asyncio.create_subprocess_exec(
-            "ping",
-            flag,
-            "-c",
-            "1",
-            "-W",
-            str(timeout_sec),
-            target,
-            stdout=asyncio.subprocess.DEVNULL,
-            stderr=asyncio.subprocess.DEVNULL,
-        )
-        rc = await asyncio.wait_for(proc.wait(), timeout=timeout_sec + 1)
-        return rc == 0, None, None if rc == 0 else "ping failed"
-    except (asyncio.TimeoutError, FileNotFoundError) as exc:
+        ok = await ping_host(target, timeout_sec=timeout_sec, family=family)
+        return ok, None, None if ok else "ping failed"
+    except Exception as exc:  # noqa: BLE001
         return False, None, str(exc)
 
 
