@@ -47,5 +47,5 @@ reset-phase:
 	./scripts/reset_phase.sh
 
 install-systemd:
-	chmod +x scripts/setup-systemd.sh
-	@echo "Run: sudo ./scripts/setup-systemd.sh --install-dir $$(pwd) --user $$(whoami)"
+	chmod +x scripts/setup-systemd.sh scripts/uninstall-systemd.sh
+	@echo "Run: sudo ./scripts/setup-systemd.sh"

@@ -95,25 +95,26 @@ When `frontend/dist` exists, the API serves the built SPA on the same port (no s
 
 ### 3. systemd
 
-From a git checkout (runs in place, no copy to `/opt`):
+Requires root — the installer uses `sudo` internally and runs the app as the **`dashboard`** system user (never root):
 
 ```bash
 cd frontend && npm ci && npm run build && cd ..
 cp .env.example .env   # edit MOCK_MODE, DASHBOARD_SECRET_KEY, etc.
-sudo ./scripts/setup-systemd.sh --install-dir "$(pwd)" --user "$(whoami)"
+sudo ./scripts/setup-systemd.sh
 ```
 
-Production layout under `/opt/dashboard`:
+Optional daily SQLite backup timer:
 
 ```bash
-sudo ./scripts/setup-systemd.sh --deploy-opt --backup-timer
+sudo ./scripts/setup-systemd.sh --backup-timer
 ```
 
-The service reads environment from `<install-dir>/.env`, serves `frontend/dist` on port 8000, and restarts on failure.
+The script deploys to `/opt/dashboard`, validates filesystem + runtime twice, and installs `/etc/systemd/system/dashboard.service`.
 
 ```bash
 sudo systemctl status dashboard
 sudo journalctl -u dashboard -f
+sudo ./scripts/uninstall-systemd.sh   # remove units only; keeps /opt/dashboard
 ```
 
 ### 5. Prometheus + Grafana
