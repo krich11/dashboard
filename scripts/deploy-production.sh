@@ -25,6 +25,10 @@ PRODUCTION_INSTALL_DIR="/opt/dashboard"
 PRODUCTION_SERVICE_USER="dashboard"
 PRODUCTION_PORT="8000"
 
+LOG_FILE=""
+DEPLOY_URL=""
+DEPLOY_FAILED_MSG=""
+
 usage() {
   cat <<EOF
 Deploy dashboard updates to production.
@@ -56,20 +60,37 @@ while [[ $# -gt 0 ]]; do
 done
 
 log() { printf '==> %s\n' "$*"; }
-die() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
-warn() { printf 'WARN: %s\n' "$*" >&2; }
+die() { DEPLOY_FAILED_MSG="$*"; exit 1; }
 check_ok() { printf '  ok: %s\n' "$*"; }
+
+init_log() {
+  mkdir -p "$ROOT/data"
+  LOG_FILE="$ROOT/data/deploy-$(date +%Y%m%d-%H%M%S).log"
+  : >"$LOG_FILE"
+}
+
+log_detail() {
+  "$@" >>"$LOG_FILE" 2>&1
+}
+
+report_final() {
+  local rc=$?
+  printf '\n'
+  if [[ $rc -eq 0 ]]; then
+    printf 'DEPLOY SUCCEEDED\n'
+    [[ -n "$DEPLOY_URL" ]] && printf '  URL: %s\n' "$DEPLOY_URL"
+    printf '  Log: %s\n' "$LOG_FILE"
+  else
+    printf 'DEPLOY FAILED\n' >&2
+    [[ -n "$DEPLOY_FAILED_MSG" ]] && printf '  Reason: %s\n' "$DEPLOY_FAILED_MSG" >&2
+    printf '  Log: %s\n' "$LOG_FILE" >&2
+  fi
+  exit "$rc"
+}
 
 require_deploy_mode() {
   if [[ -z "$DEPLOY_MODE" ]]; then
-    cat >&2 <<EOF
-ERROR: Pass --local or --remote.
-
-  ./scripts/deploy-production.sh --local
-  ./scripts/deploy-production.sh --remote
-
-Production .env at $PRODUCTION_INSTALL_DIR/.env is never modified.
-EOF
+    DEPLOY_FAILED_MSG="Pass --local or --remote (see --help)"
     exit 1
   fi
 }
@@ -98,8 +119,8 @@ preflight_local_repo() {
   check_ok "source tree"
 
   if $RUN_TESTS; then
-    log "Running backend tests"
-    (cd "$ROOT/backend" && TESTING=true PYTHONPATH=. python3 -m pytest -q)
+    log "Running backend tests (details in log)"
+    log_detail bash -c "cd '$ROOT/backend' && TESTING=true PYTHONPATH=. python3 -m pytest -q"
     check_ok "pytest"
   fi
 }
@@ -111,7 +132,7 @@ preflight_local_deploy() {
   [[ -d "$PRODUCTION_INSTALL_DIR" ]] || die "$PRODUCTION_INSTALL_DIR missing — run: sudo ./scripts/setup-systemd.sh"
   [[ -f "$PRODUCTION_INSTALL_DIR/.env" ]] || die "$PRODUCTION_INSTALL_DIR/.env missing — deploy never creates or replaces .env"
   if ! sudo -n true 2>/dev/null; then
-    log "sudo access required to copy files and restart dashboard.service"
+    log "sudo required to copy files and restart dashboard.service"
     sudo -v || die "sudo required for local deploy"
   fi
   check_ok "production install at $PRODUCTION_INSTALL_DIR"
@@ -123,7 +144,8 @@ build_frontend() {
     [[ -f "$ROOT/frontend/dist/index.html" ]] || die "frontend/dist missing"
     return
   fi
-  "$ROOT/scripts/build-frontend.sh"
+  log "Building frontend (details in log)"
+  log_detail "$ROOT/scripts/build-frontend.sh"
   check_ok "frontend/dist"
 }
 
@@ -143,27 +165,34 @@ finalize_install() {
   local install_dir="$1"
   local service_user="$2"
   local port="$3"
+  local log_file="$4"
 
-  log "Installing into $install_dir and restarting service"
-  sudo bash -s <<REMOTE
+  log "Installing into $install_dir and restarting service (details in log)"
+  log_detail sudo bash -s <<REMOTE
 set -euo pipefail
 INSTALL_DIR="$install_dir"
 SERVICE_USER="$service_user"
 PORT="$port"
 SKIP_RESTART="$SKIP_RESTART"
+LOG_FILE="$log_file"
 
+log_step() { printf '==> %s\n' "\$*" >> "\$LOG_FILE"; }
+
+log_step "chown $INSTALL_DIR"
 chown -R "\$SERVICE_USER:\$SERVICE_USER" "\$INSTALL_DIR"
 chown "\$SERVICE_USER:\$SERVICE_USER" "\$INSTALL_DIR/.env"
 chmod 0600 "\$INSTALL_DIR/.env"
 
 if [[ -x "\$INSTALL_DIR/.venv/bin/pip" ]]; then
-  sudo -u "\$SERVICE_USER" "\$INSTALL_DIR/.venv/bin/pip" install -r "\$INSTALL_DIR/backend/requirements.txt"
+  log_step "pip install -r requirements.txt"
+  sudo -u "\$SERVICE_USER" "\$INSTALL_DIR/.venv/bin/pip" install -q -r "\$INSTALL_DIR/backend/requirements.txt" >> "\$LOG_FILE" 2>&1
   sudo -u "\$SERVICE_USER" env PYTHONPATH="\$INSTALL_DIR/backend" \
-    "\$INSTALL_DIR/.venv/bin/python" -c "from app.main import app; assert app is not None"
+    "\$INSTALL_DIR/.venv/bin/python" -c "from app.main import app; assert app is not None" >> "\$LOG_FILE" 2>&1
 fi
 
 if [[ "\$SKIP_RESTART" != "true" ]]; then
-  systemctl restart dashboard.service
+  log_step "systemctl restart dashboard.service"
+  systemctl restart dashboard.service >> "\$LOG_FILE" 2>&1
   sleep 2
   systemctl is-active --quiet dashboard.service
   curl -sf "http://127.0.0.1:\$PORT/health" | grep -q '"status":"ok"'
@@ -179,17 +208,17 @@ deploy_local() {
   preflight_local_deploy
   log "Deploying to $PRODUCTION_INSTALL_DIR (preserving .env, data/, backups/, .venv/)"
   local -a flags=(-a --delete)
-  $DRY_RUN && flags+=(--dry-run -nv)
+  $DRY_RUN && flags+=(--dry-run)
   mapfile -t excludes < <(rsync_excludes)
-  sudo rsync "${flags[@]}" "${excludes[@]}" \
+  log_detail sudo rsync "${flags[@]}" "${excludes[@]}" \
     "$ROOT/backend" "$ROOT/frontend" "$ROOT/mocks" "$ROOT/scripts" "$ROOT/deploy" \
     "$ROOT/README.md" "$ROOT/Makefile" \
     "$PRODUCTION_INSTALL_DIR/"
   if [[ -d "$ROOT/frontend/dist" ]]; then
-    sudo rsync "${flags[@]}" "$ROOT/frontend/dist/" "$PRODUCTION_INSTALL_DIR/frontend/dist/"
+    log_detail sudo rsync "${flags[@]}" "$ROOT/frontend/dist/" "$PRODUCTION_INSTALL_DIR/frontend/dist/"
   fi
   $DRY_RUN && return
-  finalize_install "$PRODUCTION_INSTALL_DIR" "$PRODUCTION_SERVICE_USER" "$PRODUCTION_PORT"
+  finalize_install "$PRODUCTION_INSTALL_DIR" "$PRODUCTION_SERVICE_USER" "$PRODUCTION_PORT" "$LOG_FILE"
 }
 
 deploy_remote() {
@@ -207,18 +236,18 @@ deploy_remote() {
   local staging="/tmp/dashboard-deploy-$$"
   mapfile -t excludes < <(rsync_excludes)
   local -a flags=(-az)
-  $DRY_RUN && flags+=(--dry-run -nv)
-  rsync "${flags[@]}" "${excludes[@]}" -e "ssh ${PRODUCTION_SSH_OPTS:-}" \
+  $DRY_RUN && flags+=(--dry-run)
+  log_detail rsync "${flags[@]}" "${excludes[@]}" -e "ssh ${PRODUCTION_SSH_OPTS:-}" \
     "$ROOT/backend" "$ROOT/frontend" "$ROOT/mocks" "$ROOT/scripts" "$ROOT/deploy" \
     "$ROOT/README.md" "$ROOT/Makefile" \
     "${PRODUCTION_SSH}:${staging}/"
   if [[ -d "$ROOT/frontend/dist" ]]; then
-    rsync "${flags[@]}" -e "ssh ${PRODUCTION_SSH_OPTS:-}" \
+    log_detail rsync "${flags[@]}" -e "ssh ${PRODUCTION_SSH_OPTS:-}" \
       "$ROOT/frontend/dist/" "${PRODUCTION_SSH}:${staging}/frontend/dist/"
   fi
   $DRY_RUN && return
 
-  ssh "${ssh_opts[@]}" "$PRODUCTION_SSH" "sudo bash -s" <<REMOTE
+  log_detail ssh "${ssh_opts[@]}" "$PRODUCTION_SSH" "sudo bash -s" <<REMOTE
 set -euo pipefail
 INSTALL_DIR="$PRODUCTION_INSTALL_DIR"
 SERVICE_USER="$PRODUCTION_SERVICE_USER"
@@ -234,7 +263,7 @@ chown -R "\$SERVICE_USER:\$SERVICE_USER" "\$INSTALL_DIR"
 chown "\$SERVICE_USER:\$SERVICE_USER" "\$INSTALL_DIR/.env"
 chmod 0600 "\$INSTALL_DIR/.env"
 if [[ -x "\$INSTALL_DIR/.venv/bin/pip" ]]; then
-  sudo -u "\$SERVICE_USER" "\$INSTALL_DIR/.venv/bin/pip" install -r "\$INSTALL_DIR/backend/requirements.txt"
+  sudo -u "\$SERVICE_USER" "\$INSTALL_DIR/.venv/bin/pip" install -q -r "\$INSTALL_DIR/backend/requirements.txt"
 fi
 if [[ "\$SKIP_RESTART" != "true" ]]; then
   systemctl restart dashboard.service
@@ -247,6 +276,8 @@ REMOTE
 }
 
 main() {
+  trap report_final EXIT
+  init_log
   require_deploy_mode
   load_config
   preflight_local_repo
@@ -254,10 +285,10 @@ main() {
 
   if [[ "$DEPLOY_MODE" == local ]]; then
     deploy_local
-    log "Done: http://127.0.0.1:$PRODUCTION_PORT"
+    DEPLOY_URL="http://127.0.0.1:$PRODUCTION_PORT"
   else
     deploy_remote
-    log "Done: http://${PRODUCTION_SSH#*@}:$PRODUCTION_PORT"
+    DEPLOY_URL="http://${PRODUCTION_SSH#*@}:$PRODUCTION_PORT"
   fi
 }
 

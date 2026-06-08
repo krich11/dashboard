@@ -5,7 +5,6 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 FRONTEND_DIR="${FRONTEND_DIR:-$ROOT/frontend}"
 
-# If something invoked us as root via sudo, hand off to the real user.
 if [[ "$(id -u)" -eq 0 && -n "${SUDO_USER:-}" && "$SUDO_USER" != "root" ]]; then
   exec sudo -u "$SUDO_USER" -H "$0"
 fi
@@ -21,12 +20,11 @@ command -v npm >/dev/null || {
   exit 1
 }
 
-echo "==> Building frontend in $FRONTEND_DIR"
 cd "$FRONTEND_DIR"
-npm ci
-npm run build
+export NPM_CONFIG_LOGLEVEL="${NPM_CONFIG_LOGLEVEL:-error}"
+npm ci --no-audit --no-fund
+npm run build --silent
 [[ -f dist/index.html ]] || {
   echo "ERROR: frontend build failed" >&2
   exit 1
 }
-echo "==> frontend/dist ready"
