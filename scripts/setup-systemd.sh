@@ -166,14 +166,8 @@ ensure_frontend_build() {
     check_ok "frontend/dist already present"
     return
   fi
-  command -v npm >/dev/null || die "npm required to build frontend/dist (or build before install)"
-  log "  building frontend (npm ci && npm run build)"
-  cd "$INSTALL_DIR/frontend"
-  npm ci
-  npm run build
-  cd "$ROOT"
+  FRONTEND_DIR="$INSTALL_DIR/frontend" "$ROOT/scripts/build-frontend.sh"
   chown -R "$SERVICE_USER:$SERVICE_GROUP" "$INSTALL_DIR/frontend/dist"
-  [[ -f "$INSTALL_DIR/frontend/dist/index.html" ]] || die "frontend build failed"
   check_ok "frontend/dist built"
 }
 

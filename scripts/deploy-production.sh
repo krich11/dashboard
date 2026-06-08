@@ -139,13 +139,15 @@ build_frontend() {
     [[ -f "$ROOT/frontend/dist/index.html" ]] || die "frontend/dist missing — build first or drop --skip-build"
     return
   fi
-  command -v npm >/dev/null || die "npm is required to build frontend"
-  log "Building frontend"
-  cd "$ROOT/frontend"
-  npm ci
-  npm run build
-  cd "$ROOT"
-  [[ -f "$ROOT/frontend/dist/index.html" ]] || die "frontend build failed"
+  if [[ "$(id -u)" -eq 0 && -n "${SUDO_USER:-}" ]]; then
+    log "Building frontend as $SUDO_USER (root cannot see nvm/npm in PATH)"
+  else
+    log "Building frontend"
+  fi
+  "$ROOT/scripts/build-frontend.sh"
+  if [[ "$(id -u)" -eq 0 ]]; then
+    chown -R "$PRODUCTION_SERVICE_USER:$PRODUCTION_SERVICE_USER" "$ROOT/frontend/dist" 2>/dev/null || true
+  fi
   check_ok "frontend/dist"
 }
 
