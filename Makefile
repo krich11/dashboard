@@ -38,6 +38,10 @@ smoke-test:
 	chmod +x scripts/smoke_test.sh
 	./scripts/smoke_test.sh
 
+verify:
+	chmod +x scripts/verify-dashboard.sh
+	./scripts/verify-dashboard.sh
+
 backup:
 	chmod +x scripts/backup.sh
 	./scripts/backup.sh

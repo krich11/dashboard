@@ -220,6 +220,8 @@ if [[ "\$SKIP_RESTART" != "true" ]]; then
   PID=\$(systemctl show -p MainPID --value dashboard.service)
   USER=\$(ps -o user= -p "\$PID" | tr -d ' ')
   [[ "\$USER" == "\$SERVICE_USER" ]]
+  log_step "verify dashboard APIs and widget data"
+  BASE_URL="http://127.0.0.1:\$PORT" "\$INSTALL_DIR/scripts/verify-dashboard.sh" >> "\$LOG_FILE" 2>&1
 fi
 REMOTE
   check_ok "installed and healthy"
