@@ -95,13 +95,26 @@ When `frontend/dist` exists, the API serves the built SPA on the same port (no s
 
 ### 3. systemd
 
+From a git checkout (runs in place, no copy to `/opt`):
+
 ```bash
-sudo cp deploy/dashboard.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now dashboard
+cd frontend && npm ci && npm run build && cd ..
+cp .env.example .env   # edit MOCK_MODE, DASHBOARD_SECRET_KEY, etc.
+sudo ./scripts/setup-systemd.sh --install-dir "$(pwd)" --user "$(whoami)"
 ```
 
-The unit file expects the app at `/opt/dashboard` and reads environment from `/opt/dashboard/.env`.
+Production layout under `/opt/dashboard`:
+
+```bash
+sudo ./scripts/setup-systemd.sh --deploy-opt --backup-timer
+```
+
+The service reads environment from `<install-dir>/.env`, serves `frontend/dist` on port 8000, and restarts on failure.
+
+```bash
+sudo systemctl status dashboard
+sudo journalctl -u dashboard -f
+```
 
 ### 5. Prometheus + Grafana
 
