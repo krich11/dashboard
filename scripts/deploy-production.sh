@@ -2,10 +2,10 @@
 # Push code updates from this repo to the production dashboard server.
 #
 # On the production server (updates /opt/dashboard, never touches .env):
-#   sudo ./scripts/deploy-production.sh
+#   sudo ./scripts/deploy-production.sh --local
 #
 # From another machine (requires deploy/production.env with PRODUCTION_SSH):
-#   ./scripts/deploy-production.sh
+#   ./scripts/deploy-production.sh --remote
 #
 # Options:
 #   --dry-run          rsync dry run only
@@ -19,7 +19,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 CONFIG_FILE="$ROOT/deploy/production.env"
-LOCAL_MODE=false
+DEPLOY_MODE=""
 DRY_RUN=false
 SKIP_BUILD=false
 SKIP_RESTART=false
@@ -32,24 +32,33 @@ PRODUCTION_SERVICE_USER="dashboard"
 PRODUCTION_PORT="8000"
 
 usage() {
-  cat <<'EOF'
+  cat <<EOF
 Deploy dashboard updates to production.
 
-On this server (no config file needed):
-  sudo ./scripts/deploy-production.sh
+Choose one mode (required):
 
-From a dev machine to a remote server:
-  cp deploy/production.env.example deploy/production.env
-  ./scripts/deploy-production.sh
+  --local   Deploy on THIS machine to $PRODUCTION_INSTALL_DIR
+            Requires: sudo
+            Does not need deploy/production.env
 
-Production /opt/dashboard/.env, data/, backups/, and .venv/ are never overwritten.
+  --remote  Deploy to another host over SSH
+            Requires: deploy/production.env with PRODUCTION_SSH
+
+Examples:
+  sudo $ROOT/scripts/deploy-production.sh --local
+  $ROOT/scripts/deploy-production.sh --remote
+
+Never overwritten: $PRODUCTION_INSTALL_DIR/.env, data/, backups/, .venv/
+
+Other flags: --dry-run --skip-build --skip-restart --run-tests
 EOF
   exit "${1:-0}"
 }
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --local) LOCAL_MODE=true; shift ;;
+    --local) DEPLOY_MODE=local; shift ;;
+    --remote) DEPLOY_MODE=remote; shift ;;
     --dry-run) DRY_RUN=true; shift ;;
     --skip-build) SKIP_BUILD=true; shift ;;
     --skip-restart) SKIP_RESTART=true; shift ;;
@@ -64,26 +73,48 @@ die() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
 warn() { printf 'WARN: %s\n' "$*" >&2; }
 check_ok() { printf '  ok: %s\n' "$*"; }
 
+require_deploy_mode() {
+  if [[ -z "$DEPLOY_MODE" ]]; then
+    cat >&2 <<EOF
+ERROR: Deploy mode required. Pass --local or --remote.
+
+  On the production server (phoenix, etc.):
+    sudo $ROOT/scripts/deploy-production.sh --local
+
+  From a dev machine to a remote server:
+    cp deploy/production.env.example deploy/production.env
+    $ROOT/scripts/deploy-production.sh --remote
+
+Your production .env at $PRODUCTION_INSTALL_DIR/.env is never modified by deploy.
+Run with --help for full usage.
+EOF
+    exit 1
+  fi
+}
+
 load_config() {
+  if [[ "$DEPLOY_MODE" == remote ]]; then
+    [[ -f "$CONFIG_FILE" ]] || die "Remote deploy requires $CONFIG_FILE — copy deploy/production.env.example and set PRODUCTION_SSH"
+    # shellcheck disable=SC1090
+    source "$CONFIG_FILE"
+    [[ -n "$PRODUCTION_SSH" ]] || die "Set PRODUCTION_SSH in $CONFIG_FILE"
+    return
+  fi
+
   if [[ -f "$CONFIG_FILE" ]]; then
     # shellcheck disable=SC1090
     source "$CONFIG_FILE"
-    return
   fi
-
-  if $LOCAL_MODE || [[ -d "$PRODUCTION_INSTALL_DIR" ]]; then
-    LOCAL_MODE=true
-    log "Local deploy to $PRODUCTION_INSTALL_DIR (deploy/production.env not required)"
-    log "Preserving production .env, data/, backups/, and .venv/"
-    return
-  fi
-
-  die "Missing $CONFIG_FILE — for remote deploy, copy deploy/production.env.example and set PRODUCTION_SSH. On the production server, run: sudo $ROOT/scripts/deploy-production.sh"
+  log "Local deploy to $PRODUCTION_INSTALL_DIR"
+  log "Preserving production .env, data/, backups/, and .venv/"
 }
 
 require_local_root() {
-  if $LOCAL_MODE && [[ "$(id -u)" -ne 0 ]]; then
-    die "Deploy on this server requires sudo: sudo $ROOT/scripts/deploy-production.sh"
+  if [[ "$DEPLOY_MODE" == local ]] && [[ "$(id -u)" -ne 0 ]]; then
+    die "Local deploy requires root: sudo $ROOT/scripts/deploy-production.sh --local"
+  fi
+  if [[ "$DEPLOY_MODE" == local ]] && [[ ! -d "$PRODUCTION_INSTALL_DIR" ]]; then
+    die "Local deploy expects $PRODUCTION_INSTALL_DIR — run sudo ./scripts/setup-systemd.sh first"
   fi
 }
 
@@ -288,12 +319,13 @@ REMOTE
 }
 
 main() {
+  require_deploy_mode
   load_config
   require_local_root
   preflight_local
   build_frontend
 
-  if $LOCAL_MODE; then
+  if [[ "$DEPLOY_MODE" == local ]]; then
     deploy_local
     log "Deploy complete: http://127.0.0.1:$PRODUCTION_PORT"
   else

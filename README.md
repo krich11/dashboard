@@ -119,10 +119,10 @@ sudo ./scripts/uninstall-systemd.sh   # remove units only; keeps /opt/dashboard
 
 ### 4. Push updates to production
 
-On the **production server** (no config file needed):
+On the **production server**:
 
 ```bash
-sudo ./scripts/deploy-production.sh
+sudo ./scripts/deploy-production.sh --local
 ```
 
 From a **dev machine** to a remote server:
@@ -130,7 +130,7 @@ From a **dev machine** to a remote server:
 ```bash
 cp deploy/production.env.example deploy/production.env
 # set PRODUCTION_SSH=you@production-host
-./scripts/deploy-production.sh
+./scripts/deploy-production.sh --remote
 ```
 
 Builds `frontend/dist`, rsyncs code, and restarts `dashboard.service`. **Never overwrites**
