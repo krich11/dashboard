@@ -21,8 +21,10 @@ command -v npm >/dev/null || {
 }
 
 cd "$FRONTEND_DIR"
-export NPM_CONFIG_LOGLEVEL="${NPM_CONFIG_LOGLEVEL:-error}"
-npm ci --no-audit --no-fund
+export NPM_CONFIG_LOGLEVEL="${NPM_CONFIG_LOGLEVEL:-silent}"
+export NPM_CONFIG_AUDIT=false
+export NPM_CONFIG_FUND=false
+npm ci
 npm run build --silent
 [[ -f dist/index.html ]] || {
   echo "ERROR: frontend build failed" >&2

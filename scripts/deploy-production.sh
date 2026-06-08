@@ -82,7 +82,11 @@ report_final() {
     printf '  Log: %s\n' "$LOG_FILE"
   else
     printf 'DEPLOY FAILED\n' >&2
-    [[ -n "$DEPLOY_FAILED_MSG" ]] && printf '  Reason: %s\n' "$DEPLOY_FAILED_MSG" >&2
+    if [[ -n "$DEPLOY_FAILED_MSG" ]]; then
+      printf '  Reason: %s\n' "$DEPLOY_FAILED_MSG" >&2
+    else
+      printf '  Reason: exited with status %s (see log)\n' "$rc" >&2
+    fi
     printf '  Log: %s\n' "$LOG_FILE" >&2
   fi
   exit "$rc"
@@ -168,7 +172,7 @@ finalize_install() {
   local log_file="$4"
 
   log "Installing into $install_dir and restarting service (details in log)"
-  log_detail sudo bash -s <<REMOTE
+  log_detail sudo bash -s <<REMOTE || die "Install or health check failed"
 set -euo pipefail
 INSTALL_DIR="$install_dir"
 SERVICE_USER="$service_user"
@@ -185,7 +189,8 @@ chmod 0600 "\$INSTALL_DIR/.env"
 
 if [[ -x "\$INSTALL_DIR/.venv/bin/pip" ]]; then
   log_step "pip install -r requirements.txt"
-  sudo -u "\$SERVICE_USER" "\$INSTALL_DIR/.venv/bin/pip" install -q -r "\$INSTALL_DIR/backend/requirements.txt" >> "\$LOG_FILE" 2>&1
+  sudo -u "\$SERVICE_USER" env PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    "\$INSTALL_DIR/.venv/bin/pip" install -qq -r "\$INSTALL_DIR/backend/requirements.txt" >> "\$LOG_FILE" 2>&1
   sudo -u "\$SERVICE_USER" env PYTHONPATH="\$INSTALL_DIR/backend" \
     "\$INSTALL_DIR/.venv/bin/python" -c "from app.main import app; assert app is not None" >> "\$LOG_FILE" 2>&1
 fi
@@ -263,7 +268,8 @@ chown -R "\$SERVICE_USER:\$SERVICE_USER" "\$INSTALL_DIR"
 chown "\$SERVICE_USER:\$SERVICE_USER" "\$INSTALL_DIR/.env"
 chmod 0600 "\$INSTALL_DIR/.env"
 if [[ -x "\$INSTALL_DIR/.venv/bin/pip" ]]; then
-  sudo -u "\$SERVICE_USER" "\$INSTALL_DIR/.venv/bin/pip" install -q -r "\$INSTALL_DIR/backend/requirements.txt"
+  sudo -u "\$SERVICE_USER" env PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    "\$INSTALL_DIR/.venv/bin/pip" install -qq -r "\$INSTALL_DIR/backend/requirements.txt" >/dev/null 2>&1
 fi
 if [[ "\$SKIP_RESTART" != "true" ]]; then
   systemctl restart dashboard.service
