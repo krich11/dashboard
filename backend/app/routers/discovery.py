@@ -33,6 +33,8 @@ async def scan_discovery(
             include_arp_mac=payload.include_arp_mac,
             max_targets=payload.max_targets,
             rfc1918_only=payload.rfc1918_only,
+            use_credential_profiles=payload.use_credential_profiles,
+            credential_profile_ids=payload.credential_profile_ids or None,
             username=payload.username,
             password=payload.password,
             device_type_hint=payload.device_type_hint,

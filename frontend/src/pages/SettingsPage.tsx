@@ -6,6 +6,7 @@ import {
   acknowledgeAlertEvent,
   getCollectorSettings,
   getCollectorStatus,
+  getCredentialProfiles,
   getHistorySettings,
   runCollectorOnce,
   getEncryptionStatus,
@@ -16,6 +17,7 @@ import {
   testEncryption,
   updateAlertSettings,
   updateCollectorSettings,
+  updateCredentialProfiles,
   updateHistorySettings,
   updateMockScenario,
   updateReachabilitySettings,
@@ -23,9 +25,16 @@ import {
 import type {
   AlertSettings,
   CollectorSettings,
+  CredentialProfileWrite,
   HistorySettings,
   ReachabilitySettings,
 } from '../types/api'
+
+const CREDENTIAL_DEVICE_TYPES = ['linux_ssh', 'juniper', 'aruba', 'hpe_ilorest']
+
+type CredentialProfileForm = CredentialProfileWrite & {
+  password_configured?: boolean
+}
 
 function TargetListEditor({
   label,
@@ -97,6 +106,12 @@ export function SettingsPage() {
   })
   const [alertsForm, setAlertsForm] = useState<AlertSettings | null>(null)
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
+  const credentialProfiles = useQuery({
+    queryKey: ['credential-profiles'],
+    queryFn: async () => (await getCredentialProfiles()).profiles,
+  })
+  const [credentialForms, setCredentialForms] = useState<CredentialProfileForm[]>([])
+  const [credentialMessage, setCredentialMessage] = useState<string | null>(null)
 
   useEffect(() => {
     if (collector.data) setCollectorForm(collector.data)
@@ -113,6 +128,42 @@ export function SettingsPage() {
   useEffect(() => {
     if (alerts.data) setAlertsForm(alerts.data)
   }, [alerts.data])
+
+  useEffect(() => {
+    if (credentialProfiles.data) {
+      setCredentialForms(
+        credentialProfiles.data.map((profile) => ({
+          id: profile.id,
+          name: profile.name,
+          username: profile.username,
+          password: '',
+          password_configured: profile.password_configured,
+          device_types: profile.device_types,
+          enabled: profile.enabled,
+        })),
+      )
+    }
+  }, [credentialProfiles.data])
+
+  const saveCredentialProfiles = useMutation({
+    mutationFn: () =>
+      updateCredentialProfiles(
+        credentialForms.map((row) => ({
+          id: row.id,
+          name: row.name,
+          username: row.username,
+          password: row.password || undefined,
+          device_types: row.device_types ?? [],
+          enabled: row.enabled ?? true,
+        })),
+      ),
+    onSuccess: () => {
+      setCredentialMessage('Credential profiles saved.')
+      queryClient.invalidateQueries({ queryKey: ['credential-profiles'] })
+    },
+    onError: (err) =>
+      setCredentialMessage(err instanceof Error ? err.message : 'Save failed'),
+  })
 
   const saveCollector = useMutation({
     mutationFn: updateCollectorSettings,
@@ -647,6 +698,132 @@ export function SettingsPage() {
             </label>
           </article>
         )}
+
+        <article className="card settings-card">
+          <h3>Default credentials</h3>
+          <p className="settings-hint">
+            Saved login profiles for discovery and infrastructure scans. Assign device types to
+            limit which profiles are tried (empty = all types).
+          </p>
+          <form
+            className="settings-form"
+            onSubmit={(e) => {
+              e.preventDefault()
+              saveCredentialProfiles.mutate()
+            }}
+          >
+            {credentialForms.map((row, index) => (
+              <fieldset key={row.id ?? `new-${index}`} className="credentials-fieldset">
+                <legend>{row.name || `Profile ${index + 1}`}</legend>
+                <label>
+                  Name
+                  <input
+                    value={row.name}
+                    onChange={(e) => {
+                      const next = [...credentialForms]
+                      next[index] = { ...row, name: e.target.value }
+                      setCredentialForms(next)
+                    }}
+                  />
+                </label>
+                <label>
+                  Username
+                  <input
+                    value={row.username}
+                    onChange={(e) => {
+                      const next = [...credentialForms]
+                      next[index] = { ...row, username: e.target.value }
+                      setCredentialForms(next)
+                    }}
+                  />
+                </label>
+                <label>
+                  Password
+                  <input
+                    type="password"
+                    placeholder={row.password_configured ? 'unchanged' : 'required'}
+                    value={row.password ?? ''}
+                    onChange={(e) => {
+                      const next = [...credentialForms]
+                      next[index] = { ...row, password: e.target.value }
+                      setCredentialForms(next)
+                    }}
+                  />
+                </label>
+                <label>
+                  Device types (comma-separated, blank = any)
+                  <input
+                    value={(row.device_types ?? []).join(', ')}
+                    onChange={(e) => {
+                      const next = [...credentialForms]
+                      next[index] = {
+                        ...row,
+                        device_types: e.target.value
+                          .split(',')
+                          .map((v) => v.trim())
+                          .filter(Boolean),
+                      }
+                      setCredentialForms(next)
+                    }}
+                    placeholder="linux_ssh, juniper"
+                  />
+                </label>
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={row.enabled ?? true}
+                    onChange={(e) => {
+                      const next = [...credentialForms]
+                      next[index] = { ...row, enabled: e.target.checked }
+                      setCredentialForms(next)
+                    }}
+                  />
+                  Enabled
+                </label>
+                <button
+                  type="button"
+                  className="inline-btn"
+                  onClick={() =>
+                    setCredentialForms(credentialForms.filter((_, i) => i !== index))
+                  }
+                >
+                  Remove
+                </button>
+              </fieldset>
+            ))}
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="inline-btn"
+                onClick={() =>
+                  setCredentialForms([
+                    ...credentialForms,
+                    {
+                      name: '',
+                      username: '',
+                      password: '',
+                      device_types: [],
+                      enabled: true,
+                    },
+                  ])
+                }
+              >
+                Add profile
+              </button>
+              <button
+                type="submit"
+                className="inline-btn primary"
+                disabled={saveCredentialProfiles.isPending}
+              >
+                {saveCredentialProfiles.isPending ? 'Saving…' : 'Save credential profiles'}
+              </button>
+            </div>
+            <p className="settings-hint">
+              Supported types: {CREDENTIAL_DEVICE_TYPES.join(', ')}
+            </p>
+            {credentialMessage && <p className="settings-hint">{credentialMessage}</p>}
+          </form>
+        </article>
 
         <article className="card settings-card">
           <h3>Encryption Key</h3>

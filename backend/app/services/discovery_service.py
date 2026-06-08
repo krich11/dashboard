@@ -16,6 +16,11 @@ from app.schemas.discovery import (
 )
 from app.schemas.device import DeviceCreate
 from app.services import devices as device_service
+from app.services.credential_profiles_service import (
+    ResolvedCredential,
+    get_resolved_profile_by_id,
+    resolve_credentials_for_discovery,
+)
 from app.services.discovery_fingerprint import fingerprint_target, probe_ssh_login
 from app.services.discovery_l2 import collect_l2_neighbors, neighbor_addresses
 from app.services.discovery_targets import (
@@ -82,16 +87,14 @@ def resolve_scan_targets(
 async def probe_target(
     target: str,
     *,
-    username: str | None = None,
-    password: str | None = None,
+    credential_attempts: list[ResolvedCredential],
     device_type_hint: str | None = None,
     discovery_source: str = "active_scan",
 ) -> DiscoveryCandidate:
     result = await fingerprint_target(
         target,
-        username=username,
-        password=password,
         device_type_hint=device_type_hint,
+        credential_attempts=credential_attempts,
     )
     return DiscoveryCandidate(
         target=target,
@@ -103,6 +106,8 @@ async def probe_target(
         message=result.get("message", ""),
         discovery_source=discovery_source,
         fingerprint_methods=result.get("fingerprint_methods", []),
+        matched_credential_profile_id=result.get("matched_credential_profile_id"),
+        matched_credential_profile_name=result.get("matched_credential_profile_name"),
     )
 
 
@@ -115,6 +120,8 @@ async def scan_network(
     include_arp_mac: bool = True,
     max_targets: int | None = None,
     rfc1918_only: bool = True,
+    use_credential_profiles: bool = True,
+    credential_profile_ids: list[str] | None = None,
     username: str | None = None,
     password: str | None = None,
     device_type_hint: str | None = None,
@@ -127,12 +134,22 @@ async def scan_network(
     infrastructure_sources: list[str] = []
     l2_addresses: list[str] = []
 
+    infra_attempts = resolve_credentials_for_discovery(
+        db,
+        profile_ids=credential_profile_ids,
+        username=username,
+        password=password,
+        device_type=None,
+        use_profiles=use_credential_profiles,
+    ) if db is not None else []
+
     if include_arp_mac and db is not None and infrastructure_device_ids:
         neighbors, infrastructure_sources = await collect_l2_neighbors(
             db,
             infrastructure_device_ids,
             username=username,
             password=password,
+            credential_attempts=infra_attempts,
         )
         l2_neighbors_found = len(neighbors)
         l2_addresses = neighbor_addresses(neighbors)
@@ -146,18 +163,36 @@ async def scan_network(
     )
 
     l2_set = {a.lower() for a in l2_addresses}
-    results = await asyncio.gather(
-        *(
-            probe_target(
-                host,
-                username=username,
-                password=password,
-                device_type_hint=device_type_hint,
-                discovery_source="arp_mac_table" if host.lower() in l2_set else "active_scan",
-            )
-            for host in hosts
+
+    async def scan_host(host: str) -> DiscoveryCandidate:
+        attempts = resolve_credentials_for_discovery(
+            db,
+            profile_ids=credential_profile_ids,
+            username=username,
+            password=password,
+            device_type=device_type_hint,
+            use_profiles=use_credential_profiles,
+        ) if db is not None else (
+            [
+                ResolvedCredential(
+                    profile_id=None,
+                    profile_name="manual",
+                    username=username,
+                    password=password,
+                    device_types=(),
+                )
+            ]
+            if username and password
+            else []
         )
-    )
+        return await probe_target(
+            host,
+            credential_attempts=attempts,
+            device_type_hint=device_type_hint,
+            discovery_source="arp_mac_table" if host.lower() in l2_set else "active_scan",
+        )
+
+    results = await asyncio.gather(*(scan_host(host) for host in hosts))
     return DiscoveryScanResult(
         scanned=len(hosts),
         candidates=list(results),
@@ -276,6 +311,19 @@ def import_candidates(
             skipped += 1
             continue
 
+        cred_user: str | None = None
+        cred_pass: str | None = None
+        if import_credentials:
+            if candidate.matched_credential_profile_id:
+                resolved = get_resolved_profile_by_id(db, candidate.matched_credential_profile_id)
+                if resolved:
+                    cred_user = resolved.username
+                    cred_pass = resolved.password
+            if (not cred_user or not cred_pass) and username and password:
+                cred_user = username
+                cred_pass = password
+
+        has_creds = bool(cred_user and cred_pass)
         name = candidate.suggested_name or f"discovered-{candidate.target}"
         hostname = candidate.suggested_hostname or candidate.target
         payload = DeviceCreate(
@@ -283,9 +331,9 @@ def import_candidates(
             hostname=hostname,
             device_type=candidate.detected_type,
             management_ip=candidate.target,
-            connector_enabled=enable_connectors,
-            username=username if import_credentials else None,
-            password=password if import_credentials else None,
+            connector_enabled=enable_connectors and has_creds,
+            username=cred_user if import_credentials and has_creds else None,
+            password=cred_pass if import_credentials and has_creds else None,
         )
         device_service.create_device(db, payload)
         existing_hosts.add(candidate.target.lower())

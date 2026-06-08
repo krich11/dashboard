@@ -5,6 +5,7 @@ from app.db.session import get_db
 
 from app.config import get_settings
 from app.schemas.alerts import AlertEventRead
+from app.schemas.credentials import CredentialProfileWrite, CredentialProfilesResponse
 from app.schemas.settings import (
     AlertSettings,
     AlertTestResult,
@@ -26,7 +27,7 @@ from app.services.alert_service import (
     send_test_alert,
     update_alert_settings,
 )
-from app.services import settings_service
+from app.services import credential_profiles_service, settings_service
 from app.services.collector_service import collector_service
 from app.services.mock_scenario import VALID_SCENARIOS, get_active_mock_scenario, set_mock_scenario
 
@@ -145,3 +146,18 @@ def test_encryption(
     payload: EncryptionTestRequest, db: Session = Depends(get_db)
 ) -> EncryptionTestResult:
     return settings_service.test_encryption(db, payload)
+
+
+@router.get("/credential-profiles", response_model=CredentialProfilesResponse)
+def get_credential_profiles(db: Session = Depends(get_db)) -> CredentialProfilesResponse:
+    return credential_profiles_service.get_credential_profiles(db)
+
+
+@router.put("/credential-profiles", response_model=CredentialProfilesResponse)
+def update_credential_profiles(
+    payload: list[CredentialProfileWrite], db: Session = Depends(get_db)
+) -> CredentialProfilesResponse:
+    try:
+        return credential_profiles_service.update_credential_profiles(db, payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc

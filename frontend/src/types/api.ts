@@ -88,6 +88,24 @@ export interface AlertEvent {
   created_at: string
 }
 
+export interface CredentialProfile {
+  id: string
+  name: string
+  username: string
+  password_configured: boolean
+  device_types: string[]
+  enabled: boolean
+}
+
+export interface CredentialProfileWrite {
+  id?: string | null
+  name: string
+  username: string
+  password?: string | null
+  device_types?: string[]
+  enabled?: boolean
+}
+
 export interface DiscoveryCandidate {
   target: string
   reachable: boolean
@@ -98,6 +116,8 @@ export interface DiscoveryCandidate {
   message: string
   discovery_source?: string | null
   fingerprint_methods?: string[]
+  matched_credential_profile_id?: string | null
+  matched_credential_profile_name?: string | null
 }
 
 export interface DiscoveryScanResult {

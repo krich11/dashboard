@@ -12,6 +12,7 @@ from app.collectors.helpers import ConnectorError, device_credentials, device_ta
 from app.config import get_settings
 from app.models.device import Device
 from app.services import devices as device_service
+from app.services.credential_profiles_service import ResolvedCredential
 from app.services.discovery_targets import IPV4_RE
 
 MAC_RE = re.compile(r"(?:[0-9a-fA-F]{2}[:-]){5}[0-9a-fA-F]{2}")
@@ -229,23 +230,38 @@ def _mock_l2_neighbors(device: Device) -> list[L2Neighbor]:
     ]
 
 
+async def _collect_with_login(
+    device: Device,
+    target: str,
+    source: L2Neighbor,
+    username: str,
+    password: str,
+) -> list[L2Neighbor]:
+    if device.device_type == "juniper":
+        return await asyncio.to_thread(_juniper_cli_neighbors, target, username, password, source)
+    if device.device_type == "linux_ssh":
+        return await asyncio.to_thread(_linux_ssh_neighbors, target, username, password, source)
+    if device.device_type == "aruba":
+        rest = await _aruba_rest_neighbors(target, username, password, source)
+        if rest:
+            return rest
+        commands = ("show arp", "show mac-address-table")
+        return await asyncio.to_thread(_ssh_cli_neighbors, target, username, password, source, commands)
+    return []
+
+
 async def collect_from_device(
     device: Device,
     *,
     username: str | None = None,
     password: str | None = None,
+    credential_attempts: list[ResolvedCredential] | None = None,
 ) -> list[L2Neighbor]:
     settings = get_settings()
     if settings.mock_mode:
         return _mock_l2_neighbors(device)
 
     if device.device_type not in INFRA_TYPES:
-        return []
-
-    stored_user, stored_pass = device_credentials(device)
-    user = username or stored_user
-    pwd = password or stored_pass
-    if not user or not pwd:
         return []
 
     target = device_target(device)
@@ -255,16 +271,25 @@ async def collect_from_device(
         source_device_name=device.name,
     )
 
-    if device.device_type == "juniper":
-        return await asyncio.to_thread(_juniper_cli_neighbors, target, user, pwd, source)
-    if device.device_type == "linux_ssh":
-        return await asyncio.to_thread(_linux_ssh_neighbors, target, user, pwd, source)
-    if device.device_type == "aruba":
-        rest = await _aruba_rest_neighbors(target, user, pwd, source)
-        if rest:
-            return rest
-        commands = ("show arp", "show mac-address-table")
-        return await asyncio.to_thread(_ssh_cli_neighbors, target, user, pwd, source, commands)
+    attempts: list[tuple[str, str]] = []
+    stored_user, stored_pass = device_credentials(device)
+    if stored_user and stored_pass:
+        attempts.append((stored_user, stored_pass))
+    if username and password:
+        attempts.append((username, password))
+    for attempt in credential_attempts or []:
+        if not attempt.device_types or device.device_type in attempt.device_types:
+            attempts.append((attempt.username, attempt.password))
+
+    seen: set[tuple[str, str]] = set()
+    for user, pwd in attempts:
+        key = (user, pwd)
+        if key in seen:
+            continue
+        seen.add(key)
+        found = await _collect_with_login(device, target, source, user, pwd)
+        if found:
+            return found
     return []
 
 
@@ -274,6 +299,7 @@ async def collect_l2_neighbors(
     *,
     username: str | None = None,
     password: str | None = None,
+    credential_attempts: list[ResolvedCredential] | None = None,
 ) -> tuple[list[L2Neighbor], list[str]]:
     neighbors: list[L2Neighbor] = []
     sources: list[str] = []
@@ -283,7 +309,12 @@ async def collect_l2_neighbors(
             continue
         if device.device_type not in INFRA_TYPES:
             continue
-        found = await collect_from_device(device, username=username, password=password)
+        found = await collect_from_device(
+            device,
+            username=username,
+            password=password,
+            credential_attempts=credential_attempts,
+        )
         if found:
             neighbors.extend(found)
             sources.append(f"{device.name} ({device.device_type})")

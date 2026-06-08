@@ -17,6 +17,7 @@ Restart=on-failure
 RestartSec=5
 TimeoutStopSec=30
 
+# SQLite DB, discovery probes, collector polling
 NoNewPrivileges=true
 ReadWritePaths=/opt/dashboard/data /opt/dashboard/backups
 

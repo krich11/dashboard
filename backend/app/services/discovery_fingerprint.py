@@ -4,9 +4,13 @@ from __future__ import annotations
 
 import asyncio
 import re
+from typing import TYPE_CHECKING
 
 from app.collectors.helpers import ConnectorError, http_get_json, ping_host
 from app.config import get_settings
+
+if TYPE_CHECKING:
+    from app.services.credential_profiles_service import ResolvedCredential
 
 FINGERPRINT_PORTS = (22, 443, 830, 161)
 SSH_BANNER_RE = re.compile(r"SSH-[\d.]+-([^\r\n]+)")
@@ -64,11 +68,9 @@ async def probe_redfish(
 
 async def probe_aruba_rest(
     target: str,
-    username: str | None,
-    password: str | None,
+    username: str,
+    password: str,
 ) -> tuple[bool, str, bool]:
-    if not username or not password:
-        return False, "Aruba REST requires credentials", False
     try:
         await http_get_json(
             f"https://{target}/rest/v1/system",
@@ -128,18 +130,126 @@ async def probe_juniper_login(target: str, username: str, password: str) -> tupl
     return False, msg or ssh_msg
 
 
-def _mock_fingerprint(target: str, device_type_hint: str | None) -> dict:
+def _mock_fingerprint(
+    target: str,
+    device_type_hint: str | None,
+    credential_attempts: list[ResolvedCredential] | None,
+) -> dict:
     suffix = target.replace(":", "-").replace(".", "-")
     detected = device_type_hint or "linux_ssh"
+    matched = credential_attempts[0] if credential_attempts else None
     return {
         "reachable": True,
         "detected_type": detected,
         "suggested_name": f"discovered-{suffix}",
         "suggested_hostname": f"discovered-{suffix}.local",
-        "credentials_ok": True,
+        "credentials_ok": bool(credential_attempts),
         "message": "Mock discovery candidate",
         "fingerprint_methods": ["mock"],
+        "matched_credential_profile_id": matched.profile_id if matched else None,
+        "matched_credential_profile_name": (matched.profile_name or matched.username) if matched else None,
     }
+
+
+async def _try_credential_set(
+    target: str,
+    *,
+    username: str,
+    password: str,
+    profile_label: str | None,
+    detected: str | None,
+    device_type_hint: str | None,
+    ports: dict[int, bool],
+    methods: list[str],
+) -> dict | None:
+    messages: list[str] = []
+    credentials_ok = False
+    suggested_hostname: str | None = None
+    local_detected = detected
+
+    if device_type_hint == "aruba" or local_detected == "aruba" or ports.get(443):
+        aruba_ok, aruba_msg, aruba_auth = await probe_aruba_rest(target, username, password)
+        if aruba_ok:
+            methods.append("aruba_rest")
+        if aruba_auth:
+            methods.append("aruba_rest_auth")
+            credentials_ok = True
+            local_detected = local_detected or "aruba"
+            prefix = f"[{profile_label}] " if profile_label else ""
+            return {
+                "credentials_ok": True,
+                "detected_type": local_detected,
+                "suggested_hostname": suggested_hostname,
+                "message": f"{prefix}{aruba_msg}",
+                "matched_credential_profile_id": None,
+                "matched_credential_profile_name": profile_label,
+            }
+        messages.append(aruba_msg)
+
+    if device_type_hint == "juniper" or local_detected == "juniper" or ports.get(830):
+        jun_ok, jun_msg = await probe_juniper_login(target, username, password)
+        methods.append("juniper_netconf" if jun_ok else "juniper_netconf_fail")
+        if jun_ok:
+            credentials_ok = True
+            local_detected = "juniper"
+            prefix = f"[{profile_label}] " if profile_label else ""
+            return {
+                "credentials_ok": True,
+                "detected_type": local_detected,
+                "suggested_hostname": suggested_hostname,
+                "message": f"{prefix}{jun_msg}",
+                "matched_credential_profile_id": None,
+                "matched_credential_profile_name": profile_label,
+            }
+        messages.append(jun_msg)
+
+    if device_type_hint == "linux_ssh" or local_detected == "linux_ssh" or ports.get(22):
+        ssh_ok, ssh_msg, hostname = await probe_ssh_login(target, username, password)
+        methods.append("ssh_login" if ssh_ok else "ssh_login_fail")
+        if ssh_ok:
+            credentials_ok = True
+            local_detected = local_detected or "linux_ssh"
+            suggested_hostname = hostname
+            prefix = f"[{profile_label}] " if profile_label else ""
+            return {
+                "credentials_ok": True,
+                "detected_type": local_detected,
+                "suggested_hostname": suggested_hostname,
+                "message": f"{prefix}{ssh_msg}",
+                "matched_credential_profile_id": None,
+                "matched_credential_profile_name": profile_label,
+            }
+        messages.append(ssh_msg)
+
+    if device_type_hint == "hpe_ilorest" or local_detected == "hpe_ilorest" or ports.get(443):
+        rf_ok, rf_msg, rf_auth = await probe_redfish(target, username, password)
+        if rf_ok:
+            methods.append("redfish_probe")
+        if rf_auth:
+            credentials_ok = True
+            local_detected = local_detected or "hpe_ilorest"
+            prefix = f"[{profile_label}] " if profile_label else ""
+            return {
+                "credentials_ok": True,
+                "detected_type": local_detected,
+                "suggested_hostname": suggested_hostname,
+                "message": f"{prefix}{rf_msg}",
+                "matched_credential_profile_id": None,
+                "matched_credential_profile_name": profile_label,
+            }
+        messages.append(rf_msg)
+
+    if credentials_ok:
+        prefix = f"[{profile_label}] " if profile_label else ""
+        return {
+            "credentials_ok": True,
+            "detected_type": local_detected,
+            "suggested_hostname": suggested_hostname,
+            "message": prefix + "; ".join(messages),
+            "matched_credential_profile_id": None,
+            "matched_credential_profile_name": profile_label,
+        }
+    return None
 
 
 async def fingerprint_target(
@@ -148,10 +258,28 @@ async def fingerprint_target(
     username: str | None = None,
     password: str | None = None,
     device_type_hint: str | None = None,
+    credential_attempts: list[ResolvedCredential] | None = None,
 ) -> dict:
     settings = get_settings()
+    attempts = list(credential_attempts or [])
+    if username and password and not any(
+        a.username == username and a.password == password for a in attempts
+    ):
+        from app.services.credential_profiles_service import ResolvedCredential
+
+        attempts.insert(
+            0,
+            ResolvedCredential(
+                profile_id=None,
+                profile_name="manual",
+                username=username,
+                password=password,
+                device_types=(),
+            ),
+        )
+
     if settings.mock_mode:
-        return _mock_fingerprint(target, device_type_hint)
+        return _mock_fingerprint(target, device_type_hint, attempts)
 
     methods: list[str] = []
     reachable = await ping_host(target)
@@ -167,6 +295,8 @@ async def fingerprint_target(
     credentials_ok: bool | None = None
     messages: list[str] = []
     suggested_hostname: str | None = None
+    matched_profile_id: str | None = None
+    matched_profile_name: str | None = None
 
     if ports.get(22):
         banner_ok, banner = await grab_ssh_banner(target)
@@ -185,56 +315,35 @@ async def fingerprint_target(
         messages.append("NETCONF port 830 open — likely Juniper")
 
     if ports.get(443):
-        redfish_ok, redfish_msg, redfish_auth = await probe_redfish(target, username, password)
+        redfish_ok, redfish_msg, _ = await probe_redfish(target, None, None)
         if redfish_ok:
             methods.append("redfish")
-            if redfish_auth:
-                methods.append("redfish_auth")
-                credentials_ok = True
-                detected = detected or "hpe_ilorest"
-            elif detected is None:
+            if detected is None:
                 detected = "hpe_ilorest"
             messages.append(redfish_msg)
 
-    if username and password:
-        if device_type_hint == "aruba" or (detected is None and ports.get(443)):
-            aruba_ok, aruba_msg, aruba_auth = await probe_aruba_rest(target, username, password)
-            if aruba_ok:
-                methods.append("aruba_rest")
-            if aruba_auth:
-                methods.append("aruba_rest_auth")
-                credentials_ok = True
-                detected = detected or "aruba"
-                messages.append(aruba_msg)
+    for attempt in attempts:
+        label = attempt.profile_name or attempt.username
+        result = await _try_credential_set(
+            target,
+            username=attempt.username,
+            password=attempt.password,
+            profile_label=label,
+            detected=detected,
+            device_type_hint=device_type_hint,
+            ports=ports,
+            methods=methods,
+        )
+        if result and result.get("credentials_ok"):
+            credentials_ok = True
+            detected = result.get("detected_type") or detected
+            suggested_hostname = result.get("suggested_hostname") or suggested_hostname
+            matched_profile_id = attempt.profile_id
+            matched_profile_name = attempt.profile_name or label
+            messages.append(result["message"])
+            break
 
-        if device_type_hint == "juniper" or (detected == "juniper" and ports.get(830)):
-            jun_ok, jun_msg = await probe_juniper_login(target, username, password)
-            methods.append("juniper_netconf" if jun_ok else "juniper_netconf_fail")
-            if credentials_ok is None or jun_ok:
-                credentials_ok = jun_ok
-            if jun_ok:
-                detected = "juniper"
-            messages.append(jun_msg)
-
-        if device_type_hint == "linux_ssh" or (detected is None and ports.get(22)):
-            ssh_ok, ssh_msg, hostname = await probe_ssh_login(target, username, password)
-            methods.append("ssh_login" if ssh_ok else "ssh_login_fail")
-            if credentials_ok is None or ssh_ok:
-                credentials_ok = ssh_ok
-            if ssh_ok:
-                detected = detected or "linux_ssh"
-                suggested_hostname = hostname
-            messages.append(ssh_msg)
-
-        if device_type_hint == "hpe_ilorest" and credentials_ok is None:
-            rf_ok, rf_msg, rf_auth = await probe_redfish(target, username, password)
-            if rf_ok:
-                methods.append("redfish_probe")
-            credentials_ok = rf_auth
-            if rf_auth:
-                detected = "hpe_ilorest"
-            messages.append(rf_msg)
-    elif not messages:
+    if credentials_ok is None and not messages:
         if ports.get(443):
             detected = detected or "hpe_ilorest"
             messages.append("Port 443 open — likely Redfish/iLO (credentials not tested)")
@@ -254,6 +363,8 @@ async def fingerprint_target(
             "credentials_ok": None,
             "message": "Host unreachable (ping failed, no open fingerprint ports)",
             "fingerprint_methods": methods,
+            "matched_credential_profile_id": None,
+            "matched_credential_profile_name": None,
         }
 
     name = suggested_hostname or f"host-{target.replace('.', '-').replace(':', '-')}"
@@ -266,4 +377,6 @@ async def fingerprint_target(
         "credentials_ok": credentials_ok,
         "message": message,
         "fingerprint_methods": methods,
+        "matched_credential_profile_id": matched_profile_id,
+        "matched_credential_profile_name": matched_profile_name,
     }

@@ -11,6 +11,7 @@ export function DiscoveryPage() {
   const [useDefaultRanges, setUseDefaultRanges] = useState(true)
   const [includeArpMac, setIncludeArpMac] = useState(true)
   const [infrastructureIds, setInfrastructureIds] = useState<string[]>([])
+  const [useCredentialProfiles, setUseCredentialProfiles] = useState(true)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [deviceTypeHint, setDeviceTypeHint] = useState('')
@@ -45,6 +46,7 @@ export function DiscoveryPage() {
         use_default_ranges: useDefaultRanges,
         infrastructure_device_ids: infrastructureIds,
         include_arp_mac: includeArpMac,
+        use_credential_profiles: useCredentialProfiles,
         username: username || undefined,
         password: password || undefined,
         device_type_hint: deviceTypeHint || undefined,
@@ -62,12 +64,17 @@ export function DiscoveryPage() {
       setMessage(err instanceof Error ? err.message : 'Discovery scan failed'),
   })
 
+  const importable = candidates.filter((c) => c.reachable && c.detected_type)
+  const hasMatchedCreds = importable.some(
+    (c) => c.credentials_ok && (c.matched_credential_profile_id || (username && password)),
+  )
+
   const importSelected = useMutation({
     mutationFn: () =>
       importDiscovery({
-        candidates: candidates.filter((c) => c.reachable && c.detected_type),
-        enable_connectors: Boolean(username && password),
-        import_credentials: Boolean(username && password),
+        candidates: importable,
+        enable_connectors: hasMatchedCreds,
+        import_credentials: hasMatchedCreds,
         username: username || undefined,
         password: password || undefined,
       }),
@@ -169,8 +176,16 @@ export function DiscoveryPage() {
                 ))}
               </select>
             </label>
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={useCredentialProfiles}
+                onChange={(e) => setUseCredentialProfiles(e.target.checked)}
+              />
+              Try saved credential profiles (Settings → Default credentials)
+            </label>
             <fieldset className="credentials-fieldset">
-              <legend>Credentials (optional — enables login probe + import)</legend>
+              <legend>Manual credentials (optional — tried first, overrides nothing saved)</legend>
               <label>
                 Username
                 <input value={username} onChange={(e) => setUsername(e.target.value)} />
@@ -223,6 +238,7 @@ export function DiscoveryPage() {
                   <th>Type</th>
                   <th>Methods</th>
                   <th>Creds</th>
+                  <th>Profile</th>
                   <th>Message</th>
                 </tr>
               </thead>
@@ -240,6 +256,7 @@ export function DiscoveryPage() {
                           ? 'ok'
                           : 'fail'}
                     </td>
+                    <td>{row.matched_credential_profile_name ?? '—'}</td>
                     <td>{row.message}</td>
                   </tr>
                 ))}

@@ -3,6 +3,8 @@ import type {
   AlertEvent,
   AlertSettings,
   AlertTestResult,
+  CredentialProfile,
+  CredentialProfileWrite,
   CredentialTestResult,
   DiscoveryCandidate,
   DiscoveryPrefixesResult,
@@ -300,6 +302,18 @@ export function acknowledgeAlertEvent(eventId: number) {
   })
 }
 
+export function getCredentialProfiles() {
+  return fetchJson<{ profiles: CredentialProfile[] }>('/api/v1/settings/credential-profiles')
+}
+
+export function updateCredentialProfiles(payload: CredentialProfileWrite[]) {
+  return fetchJson<{ profiles: CredentialProfile[] }>('/api/v1/settings/credential-profiles', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+}
+
 export function getDiscoveryPrefixes() {
   return fetchJson<DiscoveryPrefixesResult>('/api/v1/discovery/prefixes')
 }
@@ -311,6 +325,8 @@ export function scanDiscovery(payload: {
   include_arp_mac?: boolean
   max_targets?: number
   rfc1918_only?: boolean
+  use_credential_profiles?: boolean
+  credential_profile_ids?: string[]
   username?: string
   password?: string
   device_type_hint?: string

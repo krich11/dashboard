@@ -20,6 +20,8 @@ class DiscoveryScanRequest(BaseModel):
     include_arp_mac: bool = True
     max_targets: int | None = Field(default=None, ge=1, le=1024)
     rfc1918_only: bool = True
+    use_credential_profiles: bool = True
+    credential_profile_ids: list[str] = Field(default_factory=list, max_length=32)
     username: str | None = None
     password: str | None = None
     device_type_hint: str | None = None
@@ -35,6 +37,8 @@ class DiscoveryCandidate(BaseModel):
     message: str = ""
     discovery_source: str | None = None
     fingerprint_methods: list[str] = Field(default_factory=list)
+    matched_credential_profile_id: str | None = None
+    matched_credential_profile_name: str | None = None
 
 
 class DiscoveryScanResult(BaseModel):
