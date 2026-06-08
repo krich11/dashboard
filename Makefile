@@ -52,4 +52,5 @@ install-systemd:
 
 deploy:
 	chmod +x scripts/deploy-production.sh
-	./scripts/deploy-production.sh
+	@echo "On production server: sudo ./scripts/deploy-production.sh"
+	@echo "From dev machine:     ./scripts/deploy-production.sh  (needs deploy/production.env)"

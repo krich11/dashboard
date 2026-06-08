@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Push code updates from this repo to the production dashboard server.
 #
-# Remote (default — reads deploy/production.env):
-#   ./scripts/deploy-production.sh
+# On the production server (updates /opt/dashboard, never touches .env):
+#   sudo ./scripts/deploy-production.sh
 #
-# Same machine (/opt/dashboard):
-#   sudo ./scripts/deploy-production.sh --local
+# From another machine (requires deploy/production.env with PRODUCTION_SSH):
+#   ./scripts/deploy-production.sh
 #
 # Options:
 #   --dry-run          rsync dry run only
@@ -35,11 +35,14 @@ usage() {
   cat <<'EOF'
 Deploy dashboard updates to production.
 
-  ./scripts/deploy-production.sh              # remote via deploy/production.env
-  sudo ./scripts/deploy-production.sh --local # same host, /opt/dashboard
+On this server (no config file needed):
+  sudo ./scripts/deploy-production.sh
 
-Configure remote target:
+From a dev machine to a remote server:
   cp deploy/production.env.example deploy/production.env
+  ./scripts/deploy-production.sh
+
+Production /opt/dashboard/.env, data/, backups/, and .venv/ are never overwritten.
 EOF
   exit "${1:-0}"
 }
@@ -65,14 +68,22 @@ load_config() {
   if [[ -f "$CONFIG_FILE" ]]; then
     # shellcheck disable=SC1090
     source "$CONFIG_FILE"
-  elif ! $LOCAL_MODE; then
-    die "Missing $CONFIG_FILE — copy deploy/production.env.example and set PRODUCTION_SSH"
+    return
   fi
+
+  if $LOCAL_MODE || [[ -d "$PRODUCTION_INSTALL_DIR" ]]; then
+    LOCAL_MODE=true
+    log "Local deploy to $PRODUCTION_INSTALL_DIR (deploy/production.env not required)"
+    log "Preserving production .env, data/, backups/, and .venv/"
+    return
+  fi
+
+  die "Missing $CONFIG_FILE — for remote deploy, copy deploy/production.env.example and set PRODUCTION_SSH. On the production server, run: sudo $ROOT/scripts/deploy-production.sh"
 }
 
 require_local_root() {
   if $LOCAL_MODE && [[ "$(id -u)" -ne 0 ]]; then
-    die "Local deploy requires sudo: sudo $ROOT/scripts/deploy-production.sh --local"
+    die "Deploy on this server requires sudo: sudo $ROOT/scripts/deploy-production.sh"
   fi
 }
 
@@ -191,6 +202,7 @@ finalize_install() {
 
 deploy_local() {
   log "Local deploy to $PRODUCTION_INSTALL_DIR"
+  [[ -f "$PRODUCTION_INSTALL_DIR/.env" ]] || die "Production .env not found at $PRODUCTION_INSTALL_DIR/.env — run setup-systemd.sh first; deploy will not create or replace .env"
   rsync_payload "$PRODUCTION_INSTALL_DIR/"
   $DRY_RUN && return
   finalize_install "$PRODUCTION_INSTALL_DIR" "$PRODUCTION_SERVICE_USER" "$PRODUCTION_PORT"
