@@ -43,7 +43,7 @@ class DiscoveryCandidate(BaseModel):
 
 class DiscoveryScanResult(BaseModel):
     scanned: int
-    candidates: list[DiscoveryCandidate]
+    candidates: list[DiscoveryCandidate]  # reachable hosts only (ping or open fingerprint ports)
     scan_prefixes: list[str] = Field(default_factory=list)
     l2_neighbors_found: int = 0
     infrastructure_sources: list[str] = Field(default_factory=list)

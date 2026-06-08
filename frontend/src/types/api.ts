@@ -122,6 +122,7 @@ export interface DiscoveryCandidate {
 
 export interface DiscoveryScanResult {
   scanned: number
+  /** Reachable hosts only (responded to ping or had open fingerprint ports). */
   candidates: DiscoveryCandidate[]
   scan_prefixes: string[]
   l2_neighbors_found: number

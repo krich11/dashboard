@@ -193,9 +193,10 @@ async def scan_network(
         )
 
     results = await asyncio.gather(*(scan_host(host) for host in hosts))
+    detected_hosts = [candidate for candidate in results if candidate.reachable]
     return DiscoveryScanResult(
         scanned=len(hosts),
-        candidates=list(results),
+        candidates=detected_hosts,
         scan_prefixes=prefixes,
         l2_neighbors_found=l2_neighbors_found,
         infrastructure_sources=infrastructure_sources,

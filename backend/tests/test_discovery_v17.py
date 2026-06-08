@@ -1,6 +1,9 @@
+import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.schemas.discovery import DiscoveryCandidate
+from app.services import discovery_service
 from app.services.discovery_targets import (
     parse_ipv6_delegated_prefixes,
     parse_rfc1918_route_prefixes,
@@ -72,3 +75,28 @@ def test_ipv6_scan_samples_first_hosts():
     hosts = sample_hosts_from_prefix("2001:db8:1000::/56", 4)
     assert len(hosts) == 4
     assert all(":" in h for h in hosts)
+
+
+@pytest.mark.asyncio
+async def test_scan_excludes_unreachable_hosts(monkeypatch):
+    async def fake_probe(target: str, **_kwargs) -> DiscoveryCandidate:
+        if target == "10.0.0.1":
+            return DiscoveryCandidate(
+                target=target,
+                reachable=True,
+                detected_type="linux_ssh",
+                message="host detected",
+            )
+        return DiscoveryCandidate(target=target, reachable=False, message="unreachable")
+
+    monkeypatch.setattr(discovery_service, "probe_target", fake_probe)
+
+    result = await discovery_service.scan_network(
+        None,
+        targets=["10.0.0.1", "10.0.0.2"],
+        use_default_ranges=False,
+    )
+    assert result.scanned == 2
+    assert len(result.candidates) == 1
+    assert result.candidates[0].target == "10.0.0.1"
+    assert all(candidate.reachable for candidate in result.candidates)

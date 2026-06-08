@@ -58,7 +58,9 @@ export function DiscoveryPage() {
         l2_neighbors_found: result.l2_neighbors_found,
         infrastructure_sources: result.infrastructure_sources,
       })
-      setMessage(`Scanned ${result.scanned} target(s).`)
+      setMessage(
+        `Scanned ${result.scanned} IP(s); found ${result.candidates.length} host(s).`,
+      )
     },
     onError: (err) =>
       setMessage(err instanceof Error ? err.message : 'Discovery scan failed'),
@@ -228,7 +230,12 @@ export function DiscoveryPage() {
               </button>
             )}
           </div>
-          {candidates.length === 0 && <p className="widget-muted">No scan results yet.</p>}
+          {candidates.length === 0 && !scan.isSuccess && (
+            <p className="widget-muted">No scan results yet.</p>
+          )}
+          {scan.isSuccess && candidates.length === 0 && (
+            <p className="widget-muted">No hosts detected in the scanned ranges.</p>
+          )}
           {candidates.length > 0 && (
             <table className="inventory-table">
               <thead>
