@@ -24,6 +24,7 @@ BIND_HOST="0.0.0.0"
 PORT="8000"
 PYTHON_BIN="${PYTHON:-python3}"
 VENV_DIR=""
+USER_SERVICE=false
 START_SERVICE=true
 INSTALL_BACKUP_TIMER=false
 
@@ -72,6 +73,10 @@ while [[ $# -gt 0 ]]; do
       INSTALL_BACKUP_TIMER=true
       shift
       ;;
+    --user-service)
+      USER_SERVICE=true
+      shift
+      ;;
     --no-start)
       START_SERVICE=false
       shift
@@ -87,20 +92,29 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ "$(id -u)" -ne 0 ]]; then
-  echo "Re-run with sudo to install the system unit:" >&2
-  printf '  sudo %s' "$ROOT/scripts/setup-systemd.sh" >&2
-  for arg in "${ORIG_ARGS[@]}"; do
-    printf ' %q' "$arg" >&2
-  done
-  printf '\n' >&2
-  exit 1
+  if ! $USER_SERVICE; then
+    echo "No root — installing user systemd service (--user-service)." >&2
+    USER_SERVICE=true
+  fi
 fi
 
-if [[ -z "$SERVICE_USER" ]]; then
-  SERVICE_USER="dashboard"
-fi
-if [[ -z "$SERVICE_GROUP" ]]; then
-  SERVICE_GROUP="$SERVICE_USER"
+user_systemctl() {
+  export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+  export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=$XDG_RUNTIME_DIR/bus}"
+  systemctl --user "$@"
+}
+
+if $USER_SERVICE; then
+  INSTALL_DIR="$(cd "${INSTALL_DIR:-$ROOT}" && pwd)"
+  SERVICE_USER="$(whoami)"
+  SERVICE_GROUP="$(id -gn)"
+else
+  if [[ -z "$SERVICE_USER" ]]; then
+    SERVICE_USER="dashboard"
+  fi
+  if [[ -z "$SERVICE_GROUP" ]]; then
+    SERVICE_GROUP="$SERVICE_USER"
+  fi
 fi
 
 if [[ ! -f "$ROOT/backend/app/main.py" ]]; then
@@ -173,14 +187,14 @@ create_venv() {
   local pyver
   pyver="$("$PYTHON_BIN" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
   echo "==> python3-venv required; installing python${pyver}-venv"
-  if command -v apt-get >/dev/null 2>&1; then
+  if command -v apt-get >/dev/null 2>&1 && [[ "$(id -u)" -eq 0 ]]; then
     apt-get update -qq
     apt-get install -y "python${pyver}-venv" || apt-get install -y python3-venv
-  else
-    echo "Install python3-venv, then re-run this script." >&2
-    return 1
+    "$PYTHON_BIN" -m venv "$VENV_DIR"
+    return 0
   fi
-  "$PYTHON_BIN" -m venv "$VENV_DIR"
+  echo "Install python3-venv or pass --python with a working interpreter." >&2
+  return 1
 }
 
 if create_venv; then
@@ -195,44 +209,87 @@ else
   VENV_DIR=""
 fi
 
-UNIT_PATH="/etc/systemd/system/dashboard.service"
-echo "==> Writing $UNIT_PATH"
-sed \
-  -e "s|@INSTALL_DIR@|$INSTALL_DIR|g" \
-  -e "s|@SERVICE_USER@|$SERVICE_USER|g" \
-  -e "s|@SERVICE_GROUP@|$SERVICE_GROUP|g" \
-  -e "s|@PYTHON@|$PYTHON_BIN|g" \
-  -e "s|@BIND_HOST@|$BIND_HOST|g" \
-  -e "s|@PORT@|$PORT|g" \
-  "$ROOT/deploy/dashboard.service.in" >"$UNIT_PATH"
+if $USER_SERVICE; then
+  UNIT_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
+  UNIT_PATH="$UNIT_DIR/dashboard.service"
+  mkdir -p "$UNIT_DIR"
+  echo "==> Writing $UNIT_PATH"
+  sed \
+    -e "s|@INSTALL_DIR@|$INSTALL_DIR|g" \
+    -e "s|@PYTHON@|$PYTHON_BIN|g" \
+    -e "s|@BIND_HOST@|$BIND_HOST|g" \
+    -e "s|@PORT@|$PORT|g" \
+    "$ROOT/deploy/dashboard.user.service.in" >"$UNIT_PATH"
 
-if $INSTALL_BACKUP_TIMER; then
-  sed "s|/opt/dashboard|$INSTALL_DIR|g" "$ROOT/deploy/dashboard-backup.service" \
-    >/etc/systemd/system/dashboard-backup.service
-  cp "$ROOT/deploy/dashboard-backup.timer" /etc/systemd/system/dashboard-backup.timer
-fi
+  user_systemctl daemon-reload
+  user_systemctl enable dashboard.service
 
-# Keep canonical /opt unit in repo aligned for documentation
-if [[ "$INSTALL_DIR" == "/opt/dashboard" ]]; then
-  cp "$UNIT_PATH" "$ROOT/deploy/dashboard.service"
-fi
+  if $START_SERVICE; then
+    user_systemctl restart dashboard.service
+    user_systemctl --no-pager --full status dashboard.service
+  else
+    echo "Unit installed. Start with: systemctl --user start dashboard"
+  fi
 
-systemctl daemon-reload
-systemctl enable dashboard.service
+  if sudo -n loginctl enable-linger "$(whoami)" 2>/dev/null; then
+    echo "==> Enabled linger (service survives logout/reboot)."
+  else
+    echo "==> Note: run 'sudo loginctl enable-linger $(whoami)' so the service starts at boot."
+  fi
 
-if $START_SERVICE; then
-  systemctl restart dashboard.service
-  systemctl --no-pager --full status dashboard.service
+  cat <<EOF
+
+Dashboard user systemd service installed.
+
+  Install dir : $INSTALL_DIR
+  Service user: $SERVICE_USER
+  URL         : http://<host>:$PORT
+
+Useful commands:
+  systemctl --user status dashboard
+  journalctl --user -u dashboard -f
+  systemctl --user restart dashboard
+
+Set MOCK_MODE=false in $INSTALL_DIR/.env for live connectors.
+EOF
 else
-  echo "Unit installed. Start with: sudo systemctl start dashboard"
-fi
+  UNIT_PATH="/etc/systemd/system/dashboard.service"
+  echo "==> Writing $UNIT_PATH"
+  sed \
+    -e "s|@INSTALL_DIR@|$INSTALL_DIR|g" \
+    -e "s|@SERVICE_USER@|$SERVICE_USER|g" \
+    -e "s|@SERVICE_GROUP@|$SERVICE_GROUP|g" \
+    -e "s|@PYTHON@|$PYTHON_BIN|g" \
+    -e "s|@BIND_HOST@|$BIND_HOST|g" \
+    -e "s|@PORT@|$PORT|g" \
+    "$ROOT/deploy/dashboard.service.in" >"$UNIT_PATH"
 
-if $INSTALL_BACKUP_TIMER; then
-  systemctl enable --now dashboard-backup.timer
-  echo "Backup timer enabled (daily)."
-fi
+  if $INSTALL_BACKUP_TIMER; then
+    sed "s|/opt/dashboard|$INSTALL_DIR|g" "$ROOT/deploy/dashboard-backup.service" \
+      >/etc/systemd/system/dashboard-backup.service
+    cp "$ROOT/deploy/dashboard-backup.timer" /etc/systemd/system/dashboard-backup.timer
+  fi
 
-cat <<EOF
+  if [[ "$INSTALL_DIR" == "/opt/dashboard" ]]; then
+    cp "$UNIT_PATH" "$ROOT/deploy/dashboard.service"
+  fi
+
+  systemctl daemon-reload
+  systemctl enable dashboard.service
+
+  if $START_SERVICE; then
+    systemctl restart dashboard.service
+    systemctl --no-pager --full status dashboard.service
+  else
+    echo "Unit installed. Start with: sudo systemctl start dashboard"
+  fi
+
+  if $INSTALL_BACKUP_TIMER; then
+    systemctl enable --now dashboard-backup.timer
+    echo "Backup timer enabled (daily)."
+  fi
+
+  cat <<EOF
 
 Dashboard systemd service installed.
 
@@ -247,3 +304,4 @@ Useful commands:
 
 Set MOCK_MODE=false in $INSTALL_DIR/.env for live connectors.
 EOF
+fi
