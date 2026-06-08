@@ -1,4 +1,4 @@
-.PHONY: dev backend frontend test build seed-mocks smoke-test install backup ci reset-phase install-systemd
+.PHONY: dev backend frontend test build seed-mocks smoke-test install backup ci reset-phase install-systemd deploy
 
 PYTHON ?= python3
 PIP ?= $(PYTHON) -m pip
@@ -49,3 +49,7 @@ reset-phase:
 install-systemd:
 	chmod +x scripts/setup-systemd.sh scripts/uninstall-systemd.sh
 	@echo "Run: sudo ./scripts/setup-systemd.sh"
+
+deploy:
+	chmod +x scripts/deploy-production.sh
+	./scripts/deploy-production.sh

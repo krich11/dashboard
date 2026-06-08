@@ -117,6 +117,26 @@ sudo journalctl -u dashboard -f
 sudo ./scripts/uninstall-systemd.sh   # remove units only; keeps /opt/dashboard
 ```
 
+### 4. Push updates to production
+
+After the initial install, deploy code changes from this repo:
+
+```bash
+cp deploy/production.env.example deploy/production.env
+# set PRODUCTION_SSH=you@production-host
+
+./scripts/deploy-production.sh
+# or: make deploy
+```
+
+Builds `frontend/dist`, rsyncs to the server (never overwrites `data/`, `backups/`, or `.env`), updates the venv, restarts `dashboard.service`, and checks `/health`.
+
+Same-host update:
+
+```bash
+sudo ./scripts/deploy-production.sh --local
+```
+
 ### 5. Prometheus + Grafana
 
 ```bash
