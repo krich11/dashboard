@@ -182,7 +182,7 @@ LOG_FILE="$log_file"
 
 log_step() { printf '==> %s\n' "\$*" >> "\$LOG_FILE"; }
 
-log_step "chown $INSTALL_DIR"
+log_step "chown \$INSTALL_DIR"
 chown -R "\$SERVICE_USER:\$SERVICE_USER" "\$INSTALL_DIR"
 chown "\$SERVICE_USER:\$SERVICE_USER" "\$INSTALL_DIR/.env"
 chmod 0600 "\$INSTALL_DIR/.env"
