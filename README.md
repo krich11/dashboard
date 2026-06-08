@@ -119,10 +119,10 @@ sudo ./scripts/uninstall-systemd.sh   # remove units only; keeps /opt/dashboard
 
 ### 4. Push updates to production
 
-On the **production server**:
+On the **production server** (builds with your npm, sudo only to install):
 
 ```bash
-sudo ./scripts/deploy-production.sh --local
+./scripts/deploy-production.sh --local
 ```
 
 From a **dev machine** to a remote server:
